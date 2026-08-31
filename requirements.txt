@@ -1,0 +1,14 @@
+# Dépendances pour le scraper
+axios==1.6.0
+cheerio==1.0.0-rc.12
+pg==8.11.0
+puppeteer==25.8.0
+
+# Dépendances Python pour l'analyse (notebook Jupyter)
+pandas>=2.0.0
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.14.0
+numpy>=1.24.0
+jupyter>=1.0.0
+ipykernel>=6.22.0

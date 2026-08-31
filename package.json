@@ -1,0 +1,26 @@
+{
+  "name": "gaynaako-collector",
+  "version": "1.0.0",
+  "description": "Collecteur d'opportunités local",
+  "main": "scraper.js",
+  "scripts": {
+    "collect": "node scraper.js",
+    "clean": "node cleaner.js",
+    "import": "node import-to-mysql.js",
+    "auto": "node auto-collect.js",
+    "pm2:start": "pm2 start ecosystem.config.js",
+    "pm2:stop": "pm2 stop gaynaako-collector",
+    "pm2:restart": "pm2 restart gaynaako-collector",
+    "pm2:logs": "pm2 logs gaynaako-collector",
+    "pm2:monit": "pm2 monit"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "csv-parser": "^3.2.1",
+    "mysql2": "^3.23.3",
+    "node-cron": "^4.6.0",
+    "puppeteer": "^25.8.0",
+    "puppeteer-core": "^25.8.0"
+  }
+}
