@@ -1,8 +1,9 @@
-# Dépendances pour le scraper
-axios==1.6.0
-cheerio==1.0.0-rc.12
-pg==8.11.0
-puppeteer==25.8.0
+# ⚠️ CE FICHIER EST POUR RÉFÉRENCE UNIQUEMENT
+# Les dépendances Node.js sont dans package.json
+# Les dépendances Python sont dans requirements-python.txt
+
+# Pour installer les dépendances Python, utilisez :
+# pip install -r requirements-python.txt
 
 # Dépendances Python pour l'analyse (notebook Jupyter)
 pandas>=2.0.0
@@ -12,3 +13,9 @@ plotly>=5.14.0
 numpy>=1.24.0
 jupyter>=1.0.0
 ipykernel>=6.22.0
+
+# Dépendances Python pour NLP et Embeddings
+sentence-transformers>=2.2.0
+mysql-connector-python>=8.0.0
+torch>=2.0.0
+transformers>=4.30.0

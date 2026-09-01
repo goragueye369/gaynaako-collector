@@ -138,3 +138,25 @@
 2026-08-31 10:01:45 +00:00: 💾 Fichier nettoyé : opportunities_clean_2026-08-31T10-01-44.csv
 2026-08-31 10:01:45 +00:00: 📅 Date : 31/08/2026 10:01:45
 2026-08-31 10:01:45 +00:00: 
+2026-08-31 11:15:05 +00:00: 🤖 Scheduler démarré...
+2026-08-31 11:15:05 +00:00: 
+2026-08-31 11:15:05 +00:00: ⏰ Prochaine exécution : Tous les jours à 10h00 (heure Sénégal)
+2026-08-31 11:15:05 +00:00: 📝 Logs : collector/logs/
+2026-08-31 11:15:05 +00:00: 
+2026-08-31 11:15:05 +00:00: ✅ Scheduler actif. Appuyez sur Ctrl+C pour arrêter.
+2026-08-31 11:15:05 +00:00: 
+2026-08-31 11:55:44 +00:00: 🤖 Scheduler démarré...
+2026-08-31 11:55:44 +00:00: 
+2026-08-31 11:55:44 +00:00: ⏰ Prochaine exécution : Tous les jours à 10h00 (heure Sénégal)
+2026-08-31 11:55:44 +00:00: 📝 Logs : collector/logs/
+2026-08-31 11:55:44 +00:00: 
+2026-08-31 11:55:44 +00:00: ✅ Scheduler actif. Appuyez sur Ctrl+C pour arrêter.
+2026-08-31 11:55:44 +00:00: 
+2026-09-01 12:49:02 +00:00: 🤖 Scheduler démarré (PIPELINE COMPLET)...
+2026-09-01 12:49:02 +00:00: 
+2026-09-01 12:49:02 +00:00: ⏰ Prochaine exécution : Tous les jours à 15h50 (TEST)
+2026-09-01 12:49:02 +00:00: 📋 Pipeline : Collecte → MySQL → NLP → Embeddings
+2026-09-01 12:49:02 +00:00: 📝 Logs : collector/logs/
+2026-09-01 12:49:02 +00:00: 
+2026-09-01 12:49:02 +00:00: ✅ Scheduler actif. Appuyez sur Ctrl+C pour arrêter.
+2026-09-01 12:49:02 +00:00: 

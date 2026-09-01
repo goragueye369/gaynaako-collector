@@ -1,1 +1,2 @@
 2026-08-31 10:00:24 +00:00: ❌ Erreur: getaddrinfo ENOTFOUND www.adepme.sn
+2026-09-01 12:48:15 +00:00: [2026-09-01T12:48:15.102Z] [PID: 35980] [32m[NODE-CRON][32m [33m[WARN][0m missed execution at Tue Sep 01 2026 10:00:00 GMT+0000 (heure moyenne de Greenwich)! Possible blocking IO or high CPU user at the same process used by node-cron.

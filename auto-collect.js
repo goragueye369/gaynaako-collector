@@ -1,14 +1,16 @@
 /**
  * Script d'automatisation complète
- * Collecte → Nettoyage → Import MySQL
+ * Collecte → Nettoyage → Processing → Import MySQL
  * Usage: node auto-collect.js
  */
 
 const { collect } = require('./scraper');
-const { main: importToMySQL } = require('./import-to-mysql');
+const { processData } = require('./data-cleaner');
+const { importToMySQL: importProcessedToMySQL } = require('./import-processed-to-mysql');
 const fs = require('fs');
 const path = require('path');
 const csv = require('csv-parser');
+const { createObjectCsvWriter } = require('csv-writer');
 
 /**
  * Fonction de nettoyage des données
@@ -44,7 +46,7 @@ async function cleanData(inputFile) {
 }
 
 /**
- * Sauvegarder les données nettoyées
+ * Sauvegarder les données nettoyées (basique)
  */
 function saveCleanedData(opportunities) {
   const cleanedDir = path.join(__dirname, 'data', 'cleaned');
@@ -74,6 +76,51 @@ function saveCleanedData(opportunities) {
   fs.writeFileSync(filepath, csvContent, 'utf8');
   
   return filepath;
+}
+
+/**
+ * Sauvegarder les données enrichies (avec métadonnées)
+ */
+async function saveProcessedData(opportunities) {
+  const processedDir = path.join(__dirname, 'data', 'processed');
+  
+  if (!fs.existsSync(processedDir)) {
+    fs.mkdirSync(processedDir, { recursive: true });
+  }
+
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, -5);
+  const filename = `opportunities_processed_${timestamp}.csv`;
+  const filepath = path.join(processedDir, filename);
+  
+  const csvWriter = createObjectCsvWriter({
+    path: filepath,
+    header: [
+      { id: 'id', title: 'id' },
+      { id: 'source', title: 'source' },
+      { id: 'source_type', title: 'source_type' },
+      { id: 'title_clean', title: 'title' },
+      { id: 'description_clean', title: 'description' },
+      { id: 'url', title: 'url' },
+      { id: 'date_original', title: 'date_original' },
+      { id: 'date_normalized', title: 'date_normalized' },
+      { id: 'country', title: 'country' },
+      { id: 'sectors', title: 'sectors' },
+      { id: 'has_description', title: 'has_description' },
+      { id: 'has_date', title: 'has_date' },
+      { id: 'quality_score', title: 'quality_score' },
+      { id: 'collected_at', title: 'collected_at' },
+      { id: 'target_audience', title: 'target_audience' },
+      { id: 'experience_required', title: 'experience_required' },
+      { id: 'budget_range', title: 'budget_range' },
+      { id: 'urgency', title: 'urgency' },
+      { id: 'complexity_level', title: 'complexity_level' },
+      { id: 'suggested_profiles', title: 'suggested_profiles' }
+    ]
+  });
+  
+  await csvWriter.writeRecords(opportunities);
+  
+  return { filepath, filename };
 }
 
 /**
@@ -110,7 +157,7 @@ async function autoCollect() {
 
   try {
     // ÉTAPE 1 : Collecte
-    console.log('📥 ÉTAPE 1/3 : Collecte des données...\n');
+    console.log('📥 ÉTAPE 1/4 : Collecte des données...\n');
     await collect();
     
     const rawFile = findLatestRawCSV();
@@ -120,8 +167,8 @@ async function autoCollect() {
     
     console.log(`✅ Collecte terminée : ${path.basename(rawFile)}\n`);
 
-    // ÉTAPE 2 : Nettoyage
-    console.log('🧹 ÉTAPE 2/3 : Nettoyage des données...\n');
+    // ÉTAPE 2 : Nettoyage basique
+    console.log('🧹 ÉTAPE 2/4 : Nettoyage basique...\n');
     const rawOpportunities = await cleanData(rawFile);
     console.log(`   - Opportunités brutes : ${rawOpportunities.length}`);
     
@@ -142,14 +189,33 @@ async function autoCollect() {
     const cleanedFile = saveCleanedData(uniqueOpportunities);
     console.log(`✅ Nettoyage terminé : ${path.basename(cleanedFile)}\n`);
 
-    // ÉTAPE 3 : Import MySQL
-    console.log('💾 ÉTAPE 3/3 : Import vers MySQL...\n');
+    // ÉTAPE 3 : Processing avancé (normalisation, enrichissement, métadonnées)
+    console.log('⚙️  ÉTAPE 3/4 : Processing avancé (métadonnées d\'attribution)...\n');
+    const processedOpportunities = await processData(cleanedFile);
+    console.log(`   - Opportunités traitées : ${processedOpportunities.length}`);
     
-    // Passer le fichier nettoyé en argument
-    process.argv[2] = cleanedFile;
-    await importToMySQL();
+    // Dédupliquer les opportunités processées
+    const uniqueProcessed = [];
+    const seenProcessed = new Set();
     
-    console.log('✅ Import terminé\n');
+    for (const opp of processedOpportunities) {
+      if (!seenProcessed.has(opp.id)) {
+        seenProcessed.add(opp.id);
+        uniqueProcessed.push(opp);
+      }
+    }
+    
+    const { filepath: processedFile, filename: processedFilename } = await saveProcessedData(uniqueProcessed);
+    console.log(`✅ Processing terminé : ${processedFilename}`);
+    console.log(`   - Métadonnées générées : target_audience, experience_required, budget_range, urgency, complexity_level, suggested_profiles\n`);
+
+    // ÉTAPE 4 : Import MySQL
+    console.log('💾 ÉTAPE 4/4 : Import vers MySQL (table opportunities_processed)...\n');
+    
+    process.argv[2] = processedFile;
+    await importProcessedToMySQL(processedFile);
+    
+    console.log('✅ Import MySQL terminé\n');
 
     // Résumé
     const duration = ((Date.now() - startTime) / 1000).toFixed(1);
@@ -161,9 +227,13 @@ async function autoCollect() {
     console.log(`⏱️  Durée totale : ${duration}s`);
     console.log(`📊 Opportunités collectées : ${rawOpportunities.length}`);
     console.log(`🧹 Opportunités nettoyées : ${uniqueOpportunities.length}`);
+    console.log(`⚙️  Opportunités enrichies : ${uniqueProcessed.length}`);
     console.log(`💾 Fichier brut : ${path.basename(rawFile)}`);
     console.log(`💾 Fichier nettoyé : ${path.basename(cleanedFile)}`);
-    console.log(`📅 Date : ${new Date().toLocaleString('fr-FR')}\n`);
+    console.log(`💾 Dataset enrichi : ${processedFilename}`);
+    console.log(`\n📊 Table MySQL mise à jour :`);
+    console.log(`   - opportunities_processed (avec métadonnées d'attribution)`);
+    console.log(`\n📅 Date : ${new Date().toLocaleString('fr-FR')}\n`);
 
   } catch (error) {
     console.error('\n❌ Erreur lors de l\'automatisation:', error.message);
