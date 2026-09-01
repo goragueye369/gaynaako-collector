@@ -19,8 +19,8 @@ module.exports = {
         MYSQL_HOST: 'localhost',
         MYSQL_PORT: 3306,
         MYSQL_DB: 'gaynaako_opportunities',
-        MYSQL_USER: 'root',
-        MYSQL_PASSWORD: ''
+        MYSQL_USER: 'gaynaako_api',
+        MYSQL_PASSWORD: 'apipassword123'
       },
       
       // Gestion des erreurs et redémarrages
@@ -64,8 +64,8 @@ module.exports = {
         DB_HOST: 'localhost',
         DB_PORT: 3306,
         DB_NAME: 'gaynaako_opportunities',
-        DB_USER: 'root',
-        DB_PASSWORD: 'rootpassword'
+        DB_USER: 'gaynaako_api',
+        DB_PASSWORD: 'apipassword123'
       },
       
       // Gestion des erreurs et redémarrages

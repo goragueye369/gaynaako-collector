@@ -64,3 +64,47 @@
 2026-08-31 11:56:31 +00:00:    http://localhost:3001/api/opportunities/profile/expert_tech,consultant_digital
 2026-08-31 11:56:31 +00:00:    http://localhost:3001/api/search?q=agriculture
 2026-08-31 11:56:31 +00:00: 
+2026-09-01 15:54:26 +00:00: ╔════════════════════════════════════════╗
+2026-09-01 15:54:26 +00:00: ║   🚀 API GAYNAAKO - DÉMARRÉE         ║
+2026-09-01 15:54:26 +00:00: ╚════════════════════════════════════════╝
+2026-09-01 15:54:26 +00:00: 
+2026-09-01 15:54:26 +00:00: ✅ Serveur démarré sur le port 3001
+2026-09-01 15:54:26 +00:00: 📍 URL: http://localhost:3001
+2026-09-01 15:54:26 +00:00: 
+2026-09-01 15:54:26 +00:00: 📚 Endpoints disponibles:
+2026-09-01 15:54:26 +00:00:    - GET  /api/opportunities
+2026-09-01 15:54:26 +00:00:    - GET  /api/opportunities/:id
+2026-09-01 15:54:26 +00:00:    - GET  /api/opportunities/profile/:profiles
+2026-09-01 15:54:26 +00:00:    - GET  /api/search?q=...
+2026-09-01 15:54:26 +00:00:    - GET  /api/statistics
+2026-09-01 15:54:26 +00:00:    - GET  /api/sectors
+2026-09-01 15:54:26 +00:00:    - GET  /api/countries
+2026-09-01 15:54:26 +00:00:    - GET  /api/health
+2026-09-01 15:54:26 +00:00: 
+2026-09-01 15:54:26 +00:00: 💡 Exemples:
+2026-09-01 15:54:26 +00:00:    http://localhost:3001/api/opportunities?sector=technologie&limit=10
+2026-09-01 15:54:26 +00:00:    http://localhost:3001/api/opportunities/profile/expert_tech,consultant_digital
+2026-09-01 15:54:26 +00:00:    http://localhost:3001/api/search?q=agriculture
+2026-09-01 15:54:26 +00:00: 
+2026-09-01 16:10:57 +00:00: ╔════════════════════════════════════════╗
+2026-09-01 16:10:57 +00:00: ║   🚀 API GAYNAAKO - DÉMARRÉE         ║
+2026-09-01 16:10:57 +00:00: ╚════════════════════════════════════════╝
+2026-09-01 16:10:57 +00:00: 
+2026-09-01 16:10:57 +00:00: ✅ Serveur démarré sur le port 3001
+2026-09-01 16:10:57 +00:00: 📍 URL: http://localhost:3001
+2026-09-01 16:10:57 +00:00: 
+2026-09-01 16:10:57 +00:00: 📚 Endpoints disponibles:
+2026-09-01 16:10:57 +00:00:    - GET  /api/opportunities
+2026-09-01 16:10:57 +00:00:    - GET  /api/opportunities/:id
+2026-09-01 16:10:57 +00:00:    - GET  /api/opportunities/profile/:profiles
+2026-09-01 16:10:57 +00:00:    - GET  /api/search?q=...
+2026-09-01 16:10:57 +00:00:    - GET  /api/statistics
+2026-09-01 16:10:57 +00:00:    - GET  /api/sectors
+2026-09-01 16:10:57 +00:00:    - GET  /api/countries
+2026-09-01 16:10:57 +00:00:    - GET  /api/health
+2026-09-01 16:10:57 +00:00: 
+2026-09-01 16:10:57 +00:00: 💡 Exemples:
+2026-09-01 16:10:57 +00:00:    http://localhost:3001/api/opportunities?sector=technologie&limit=10
+2026-09-01 16:10:57 +00:00:    http://localhost:3001/api/opportunities/profile/expert_tech,consultant_digital
+2026-09-01 16:10:57 +00:00:    http://localhost:3001/api/search?q=agriculture
+2026-09-01 16:10:57 +00:00: 

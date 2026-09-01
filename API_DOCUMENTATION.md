@@ -1,70 +1,120 @@
-# 📡 API Documentation - Gaynaako Opportunities
+# 📘 API GAYNAAKO - DOCUMENTATION COMPLÈTE
 
-## Vue d'ensemble
-
-API REST qui expose les opportunités enrichies avec métadonnées d'attribution pour le backend.
-
-**Base URL:** `http://localhost:3001/api`
+**Version**: 2.0  
+**Base URL**: `http://localhost:3001/api`  
+**Format**: JSON  
+**Dernière mise à jour**: 2026-09-01
 
 ---
 
-## 🚀 Démarrage
+## 📋 TABLE DES MATIÈRES
 
-```bash
-# Installer les dépendances
-npm install
+1. [Introduction](#introduction)
+2. [Authentification](#authentification)
+3. [Endpoints](#endpoints)
+   - [Opportunités](#opportunités)
+   - [Recherche](#recherche)
+   - [NLP & Embeddings](#nlp--embeddings)
+   - [Statistiques](#statistiques)
+   - [Référentiels](#référentiels)
+4. [Modèles de données](#modèles-de-données)
+5. [Codes d'erreur](#codes-derreur)
+6. [Exemples d'utilisation](#exemples-dutilisation)
 
-# Démarrer l'API
-node api-server.js
+---
 
-# L'API sera disponible sur http://localhost:3001
+## 🎯 INTRODUCTION
+
+Cette API expose les données d'opportunités collectées et enrichies automatiquement depuis Gaynaako.sn.
+
+### Fonctionnalités principales
+- ✅ Récupération des opportunités avec filtres avancés
+- ✅ Recherche textuelle et sémantique
+- ✅ Analyse NLP (montants, deadlines, organisations, contacts)
+- ✅ Recommandations basées sur les embeddings IA
+- ✅ Statistiques et analytics
+- ✅ Pagination et tri
+
+### Stack technique
+- **Backend**: Node.js + Express
+- **Base de données**: MySQL
+- **NLP**: Python + spaCy + Transformers
+- **Embeddings**: sentence-transformers (modèle multilingue)
+
+---
+
+## 🔐 AUTHENTIFICATION
+
+**Pour l'instant**: Pas d'authentification requise (API publique)
+
+**À implémenter** (recommandé pour production):
+```javascript
+Headers: {
+  "Authorization": "Bearer YOUR_API_KEY",
+  "Content-Type": "application/json"
+}
 ```
 
 ---
 
-## 📋 Endpoints
+## 📡 ENDPOINTS
 
-### 1. **GET /api/opportunities**
-Liste toutes les opportunités avec filtres
+### OPPORTUNITÉS
 
-**Query Parameters:**
-- `sector` (string) - Filtrer par secteur
-- `country` (string) - Filtrer par pays
-- `source_type` (enum: 'national', 'international') - Type de source
-- `min_quality` (int) - Score de qualité minimum (0-100)
-- `target_audience` (string) - Public cible
-- `urgency` (enum: 'Urgente', 'Haute', 'Normale', 'Flexible')
-- `limit` (int, default: 50) - Nombre de résultats
-- `offset` (int, default: 0) - Offset pour pagination
+#### 1. Liste des opportunités
 
-**Exemple:**
-```bash
-GET /api/opportunities?sector=technologie&min_quality=70&limit=10
+```http
+GET /api/opportunities
 ```
 
-**Response:**
+Récupère la liste des opportunités avec filtres et pagination.
+
+**Paramètres query** :
+
+| Paramètre | Type | Défaut | Description |
+|-----------|------|--------|-------------|
+| `limit` | integer | 50 | Nombre de résultats par page (max 100) |
+| `offset` | integer | 0 | Décalage pour la pagination |
+| `sector` | string | - | Filtrer par secteur |
+| `country` | string | - | Filtrer par pays |
+| `min_quality` | integer | - | Score qualité minimum (0-100) |
+| `target_audience` | string | - | Public cible (Développeurs, Designers, etc.) |
+| `urgency` | string | - | Niveau d'urgence (Urgent, Normal, Flexible) |
+
+**Exemple de requête** :
+```bash
+GET /api/opportunities?sector=Technologie&min_quality=60&limit=10
+```
+
+**Réponse** :
 ```json
 {
   "success": true,
   "data": [
     {
-      "id": "a1b2c3d4e5f6",
-      "source_name": "Banque Mondiale",
-      "source_type": "international",
-      "title": "Projet d'électrification...",
-      "description": "...",
-      "url": "https://...",
-      "date_normalized": "2026-09-15",
+      "id": 42,
+      "title": "Développeur Full Stack recherché",
+      "description": "Mission de 6 mois pour...",
+      "url": "https://gaynaako.sn/opportunites/42",
+      "sectors": "Technologie, IT",
       "country": "Sénégal",
-      "sectors": "technologie, energie",
-      "quality_score": 85,
-      "target_audience": "PME",
-      "experience_required": "Confirmé",
-      "budget_range": "Moyen (10-100M)",
-      "urgency": "Haute",
-      "complexity_level": 3,
-      "suggested_profiles": "expert_tech, ingenieur_energie",
-      "collected_at": "2026-08-31T10:00:00Z"
+      "date_published": "2026-08-25",
+      "target_audience": "Développeurs",
+      "experience_required": "Intermédiaire",
+      "budget_range": "Moyen",
+      "urgency": "Normal",
+      "complexity_level": "Modéré",
+      "suggested_profiles": "expert_tech,fullstack_dev",
+      "quality_score": 75,
+      "nlp_amounts": ["2000€", "3000€"],
+      "nlp_deadlines": ["15 décembre 2026"],
+      "nlp_organizations": ["Sonatel"],
+      "nlp_emails": null,
+      "nlp_phones": null,
+      "nlp_keywords": ["Full Stack", "React", "Node.js"],
+      "nlp_quality_score": 6,
+      "nlp_processed_at": "2026-09-01 13:10:45",
+      "collected_at": "2026-08-31 15:51:48"
     }
   ],
   "pagination": {
@@ -78,118 +128,257 @@ GET /api/opportunities?sector=technologie&min_quality=70&limit=10
 
 ---
 
-### 2. **GET /api/opportunities/:id**
-Détails d'une opportunité spécifique
+#### 2. Détails d'une opportunité
 
-**Exemple:**
-```bash
-GET /api/opportunities/a1b2c3d4e5f6
+```http
+GET /api/opportunities/:id
 ```
 
-**Response:**
+Récupère les détails complets d'une opportunité.
+
+**Paramètres** :
+- `id` (integer, required) : ID de l'opportunité
+
+**Exemple** :
+```bash
+GET /api/opportunities/42
+```
+
+**Réponse** :
 ```json
 {
   "success": true,
   "data": {
-    "id": "a1b2c3d4e5f6",
-    "title": "...",
-    ...
+    "id": 42,
+    "title": "Développeur Full Stack recherché",
+    // ... tous les champs de l'opportunité
   }
 }
 ```
 
 ---
 
-### 3. **GET /api/opportunities/profile/:profiles**
-Opportunités suggérées pour un ou plusieurs profils
+#### 3. Opportunités similaires
 
-**Parameters:**
-- `profiles` (string) - Liste de profils séparés par virgule
+```http
+GET /api/opportunities/:id/similar
+```
 
-**Query Parameters:**
-- `limit` (int, default: 20)
+Trouve les opportunités les plus similaires (utilise les embeddings IA).
 
-**Exemple:**
+**Paramètres** :
+- `id` (integer, required) : ID de l'opportunité de référence
+- `limit` (integer, optional) : Nombre de résultats (défaut: 5)
+
+**Exemple** :
 ```bash
-GET /api/opportunities/profile/expert_tech,consultant_digital?limit=20
+GET /api/opportunities/42/similar?limit=3
 ```
 
-**Response:**
-```json
-{
-  "success": true,
-  "data": [...],
-  "count": 15
-}
-```
-
----
-
-### 4. **GET /api/search**
-Recherche textuelle fulltext
-
-**Query Parameters:**
-- `q` (string, required) - Termes de recherche
-- `limit` (int, default: 20)
-
-**Exemple:**
-```bash
-GET /api/search?q=agriculture+digital&limit=10
-```
-
-**Response:**
+**Réponse** :
 ```json
 {
   "success": true,
   "data": [
     {
-      "id": "...",
-      "title": "...",
-      "relevance": 2.5
+      "id": 55,
+      "title": "Mission Python full-time",
+      "description": "Développement backend...",
+      "sectors": "IT",
+      "country": "Sénégal",
+      "quality_score": 72,
+      "url": "https://gaynaako.sn/opportunites/55",
+      "similarity": 0.92
+    },
+    {
+      "id": 17,
+      "title": "Expert Django REST Framework",
+      "similarity": 0.85
     }
+  ]
+}
+```
+
+**Note** : Le score `similarity` va de 0 (différent) à 1 (identique).
+
+---
+
+#### 4. Opportunités par profil
+
+```http
+GET /api/opportunities/profile/:profiles
+```
+
+Récupère les opportunités suggérées pour un ou plusieurs profils.
+
+**Paramètres** :
+- `profiles` (string, required) : Profils séparés par des virgules
+- `limit` (integer, optional) : Nombre de résultats (défaut: 20)
+
+**Profils disponibles** :
+- `expert_tech`
+- `fullstack_dev`
+- `frontend_dev`
+- `backend_dev`
+- `data_scientist`
+- `designer_ux_ui`
+- `consultant_digital`
+- `expert_marketing`
+- `expert_finance`
+
+**Exemple** :
+```bash
+GET /api/opportunities/profile/expert_tech,fullstack_dev?limit=10
+```
+
+**Réponse** :
+```json
+{
+  "success": true,
+  "data": [
+    // ... opportunités correspondantes
   ],
-  "count": 5
+  "count": 10
 }
 ```
 
 ---
 
-### 5. **GET /api/statistics**
-Statistiques globales
+### RECHERCHE
 
-**Exemple:**
+#### 5. Recherche textuelle
+
+```http
+GET /api/search
+```
+
+Recherche par mots-clés dans les titres, descriptions et secteurs.
+
+**Paramètres** :
+- `q` (string, required) : Texte à rechercher
+- `limit` (integer, optional) : Nombre de résultats (défaut: 20)
+
+**Exemple** :
+```bash
+GET /api/search?q=python django&limit=5
+```
+
+**Réponse** :
+```json
+{
+  "success": true,
+  "data": [
+    // ... opportunités correspondantes
+  ],
+  "count": 5,
+  "query": "python django"
+}
+```
+
+---
+
+### NLP & EMBEDDINGS
+
+#### 6. Données NLP d'une opportunité
+
+```http
+GET /api/opportunities/:id/nlp
+```
+
+Récupère les informations extraites par analyse NLP (Intelligence Artificielle).
+
+**Paramètres** :
+- `id` (integer, required) : ID de l'opportunité
+
+**Exemple** :
+```bash
+GET /api/opportunities/42/nlp
+```
+
+**Réponse** :
+```json
+{
+  "success": true,
+  "has_nlp": true,
+  "data": {
+    "id": 42,
+    "title": "Développeur Full Stack recherché",
+    "nlp_amounts": ["2000€", "3000€/mois"],
+    "nlp_deadlines": ["15 décembre 2026"],
+    "nlp_organizations": ["Sonatel", "Orange"],
+    "nlp_emails": ["recrutement@entreprise.sn"],
+    "nlp_phones": ["+221 77 123 45 67"],
+    "nlp_keywords": ["Full Stack", "React", "Node.js", "6 mois"],
+    "nlp_quality_score": 8,
+    "nlp_processed_at": "2026-09-01 13:10:45"
+  }
+}
+```
+
+**Champs NLP** :
+- `nlp_amounts` : Montants/budgets détectés
+- `nlp_deadlines` : Dates limites de candidature
+- `nlp_organizations` : Entreprises/institutions mentionnées
+- `nlp_emails` : Adresses email de contact
+- `nlp_phones` : Numéros de téléphone
+- `nlp_keywords` : Mots-clés extraits
+- `nlp_quality_score` : Score qualité NLP (0-10)
+
+**Note** : Si `has_nlp = false`, l'opportunité n'a pas été traitée par NLP (quality_score trop faible).
+
+---
+
+### STATISTIQUES
+
+#### 7. Statistiques globales
+
+```http
+GET /api/statistics
+```
+
+Récupère les statistiques et KPIs du système.
+
+**Exemple** :
 ```bash
 GET /api/statistics
 ```
 
-**Response:**
+**Réponse** :
 ```json
 {
   "success": true,
   "data": {
     "global": {
       "total_opportunities": 57,
-      "avg_quality_score": 61.1,
-      "total_countries": 4,
-      "total_sources": 8,
-      "high_quality_count": 18
+      "with_nlp_analysis": 44,
+      "avg_quality_score": 60.7,
+      "avg_nlp_score": 2.1,
+      "total_countries": 3,
+      "high_quality_count": 12,
+      "with_budget": 2,
+      "with_deadline": 1,
+      "with_organization": 13,
+      "with_email": 0
     },
-    "by_sector": [
-      { "sector": "technologie", "count": 28 },
-      { "sector": "eau", "count": 6 }
-    ],
-    "by_country": [
-      { "country": "Afrique", "count": 21 },
-      { "country": "Sénégal", "count": 20 }
-    ],
     "by_audience": [
-      { "target_audience": "Tout public", "count": 45 },
-      { "target_audience": "PME", "count": 8 }
+      { "target_audience": "Développeurs", "count": 25 },
+      { "target_audience": "Designers", "count": 8 },
+      { "target_audience": "Consultants", "count": 12 }
     ],
     "by_urgency": [
-      { "urgency": "Urgente", "count": 0 },
-      { "urgency": "Haute", "count": 1 },
-      { "urgency": "Normale", "count": 56 }
+      { "urgency": "Normal", "count": 35 },
+      { "urgency": "Urgent", "count": 10 },
+      { "urgency": "Flexible", "count": 12 }
+    ],
+    "by_experience": [
+      { "experience_required": "Intermédiaire", "count": 30 },
+      { "experience_required": "Senior", "count": 15 },
+      { "experience_required": "Junior", "count": 12 }
+    ],
+    "by_budget": [
+      { "budget_range": "Moyen", "count": 25 },
+      { "budget_range": "Petit budget", "count": 20 },
+      { "budget_range": "Élevé", "count": 12 }
     ]
   }
 }
@@ -197,311 +386,278 @@ GET /api/statistics
 
 ---
 
-### 6. **GET /api/sectors**
-Liste des secteurs disponibles
+### RÉFÉRENTIELS
 
-**Response:**
+#### 8. Liste des secteurs
+
+```http
+GET /api/sectors
+```
+
+Récupère la liste des secteurs d'activité disponibles.
+
+**Réponse** :
 ```json
 {
   "success": true,
   "data": [
-    {
-      "id": 1,
-      "name": "agriculture",
-      "description": "Agriculture, élevage, pêche",
-      "keywords": "agriculture,agri,agricole,elevage,..."
-    }
-  ]
+    { "name": "Technologie" },
+    { "name": "Agriculture" },
+    { "name": "Finance" },
+    { "name": "Santé" }
+  ],
+  "count": 4
 }
 ```
 
 ---
 
-### 7. **GET /api/countries**
-Liste des pays disponibles
+#### 9. Liste des pays
 
-**Response:**
+```http
+GET /api/countries
+```
+
+Récupère la liste des pays avec le nombre d'opportunités.
+
+**Réponse** :
 ```json
 {
   "success": true,
   "data": [
-    {
-      "id": 1,
-      "name": "Sénégal",
-      "code": "SEN",
-      "region": "Afrique de l'Ouest",
-      "keywords": "senegal,dakar,..."
-    }
-  ]
+    { "name": "Sénégal", "count": 45 },
+    { "name": "Côte d'Ivoire", "count": 8 },
+    { "name": "International", "count": 4 }
+  ],
+  "count": 3
 }
 ```
 
 ---
 
-### 8. **GET /api/health**
-Vérifier la santé de l'API
+#### 10. Santé de l'API
 
-**Response:**
+```http
+GET /api/health
+```
+
+Vérifie que l'API et la base de données sont opérationnelles.
+
+**Réponse** :
 ```json
 {
   "success": true,
   "status": "healthy",
-  "timestamp": "2026-08-31T12:00:00.000Z"
+  "timestamp": "2026-09-01T13:45:30.123Z"
 }
 ```
 
 ---
 
-## 📊 Métadonnées d'Attribution
+## 📊 MODÈLES DE DONNÉES
 
-Chaque opportunité contient des métadonnées pour faciliter l'attribution automatique :
+### Opportunité (opportunities_processed)
 
-### **target_audience**
-Public cible de l'opportunité
-- `Tout public`
-- `PME`
-- `Startup`
-- `Grande entreprise`
-- `ONG/Association`
-- `Public`
+```typescript
+interface Opportunity {
+  // Identifiant
+  id: number;
+  
+  // Données de base
+  title: string;
+  description: string;
+  url: string;
+  sectors: string;              // CSV: "IT, Technologie"
+  country: string;
+  date_published: string;       // ISO date
+  
+  // Métadonnées (générées par IA)
+  target_audience: string;      // "Développeurs", "Designers", etc.
+  experience_required: string;  // "Junior", "Intermédiaire", "Senior"
+  budget_range: string;         // "Petit budget", "Moyen", "Élevé"
+  urgency: string;              // "Urgent", "Normal", "Flexible"
+  complexity_level: string;     // "Simple", "Modéré", "Complexe"
+  suggested_profiles: string;   // CSV: "expert_tech,fullstack_dev"
+  quality_score: number;        // 0-100
+  
+  // Colonnes NLP (extraites par IA)
+  nlp_amounts: string[] | null;        // ["2000€", "3000€"]
+  nlp_deadlines: string[] | null;      // ["15 décembre 2026"]
+  nlp_organizations: string[] | null;  // ["Sonatel", "Orange"]
+  nlp_emails: string[] | null;         // ["contact@example.com"]
+  nlp_phones: string[] | null;         // ["+221 77 123 45 67"]
+  nlp_keywords: string[] | null;       // ["Python", "Django"]
+  nlp_quality_score: number | null;    // 0-10
+  nlp_processed_at: string | null;     // ISO datetime
+  
+  // Dates
+  collected_at: string;         // ISO datetime
+  updated_at: string;           // ISO datetime
+}
+```
 
-### **experience_required**
-Niveau d'expérience requis
-- `Expert`
-- `Confirmé`
-- `Intermédiaire`
+### Embedding
 
-### **budget_range**
-Fourchette budgétaire estimée
-- `Petit (<10M)`
-- `Moyen (10-100M)`
-- `Grand (>100M)`
-- `Grand (>1 Mrd)`
-- `Non spécifié`
-
-### **urgency**
-Urgence basée sur la date limite
-- `Urgente` (< 7 jours)
-- `Haute` (7-30 jours)
-- `Normale` (30-60 jours)
-- `Flexible` (> 60 jours)
-- `Expirée` (date dépassée)
-
-### **complexity_level**
-Niveau de complexité (1-5)
-- 1: Très simple
-- 2: Simple
-- 3: Moyen
-- 4: Complexe
-- 5: Très complexe
-
-### **suggested_profiles**
-Liste de profils suggérés (séparés par virgule)
-
-Exemples:
-- `expert_tech, consultant_digital, developpeur`
-- `expert_agriculture, consultant_agro`
-- `ingenieur_energie, expert_renewable`
-
----
-
-## 🔍 Profils Disponibles
-
-### Par Secteur
-
-**Agriculture:**
-- `expert_agriculture`
-- `consultant_agro`
-- `ingenieur_agronome`
-
-**Santé:**
-- `expert_sante`
-- `consultant_medical`
-- `gestionnaire_sante`
-
-**Éducation:**
-- `expert_education`
-- `consultant_formation`
-- `pedagogie`
-
-**Infrastructure:**
-- `ingenieur_civil`
-- `architecte`
-- `expert_infrastructure`
-
-**Énergie:**
-- `ingenieur_energie`
-- `expert_renewable`
-- `consultant_energie`
-
-**Eau:**
-- `ingenieur_hydraulique`
-- `expert_eau`
-- `environnement`
-
-**Technologie:**
-- `expert_tech`
-- `consultant_digital`
-- `developpeur`
-- `it_manager`
-
-**Finance:**
-- `expert_finance`
-- `consultant_finance`
-- `comptable`
-- `auditeur`
-
-**Environnement:**
-- `expert_environnement`
-- `consultant_climat`
-- `eco_conseiller`
-
-**Gouvernance:**
-- `expert_gouvernance`
-- `consultant_public`
-- `administrateur`
-
-**Commerce:**
-- `expert_commerce`
-- `consultant_export`
-- `business_dev`
-
-**Industrie:**
-- `ingenieur_industriel`
-- `expert_production`
-- `qualite`
-
-**Tourisme:**
-- `expert_tourisme`
-- `consultant_hotellerie`
-- `culture`
-
-### Profils Génériques
-
-- `expert_afrique_ouest` (pour pays africains)
-- `consultant_pme` (pour PME)
-- `accompagnement_startup` (pour startups)
-
----
-
-## 🛠️ Configuration
-
-### Variables d'environnement
-
-```bash
-# Port du serveur
-PORT=3001
-
-# MySQL
-DB_HOST=localhost
-DB_PORT=3306
-DB_USER=root
-DB_PASSWORD=rootpassword
-DB_NAME=gaynaako_opportunities
+```typescript
+interface Embedding {
+  opportunity_id: number;
+  embedding: number[];          // Vecteur de 384 dimensions
+  embedding_dim: number;        // 384
+  model_name: string;           // "paraphrase-multilingual-MiniLM-L12-v2"
+  created_at: string;           // ISO datetime
+}
 ```
 
 ---
 
-## 🔐 Sécurité
+## ⚠️ CODES D'ERREUR
 
-**Pour la production:**
+| Code | Signification | Description |
+|------|---------------|-------------|
+| 200 | OK | Requête réussie |
+| 400 | Bad Request | Paramètres invalides |
+| 404 | Not Found | Ressource non trouvée |
+| 500 | Internal Server Error | Erreur serveur |
 
-1. Ajouter une authentification (JWT)
-2. Limiter le taux de requêtes (rate limiting)
-3. Valider tous les inputs
-4. Utiliser HTTPS
-5. Ajouter un système de logs
+**Format des erreurs** :
+```json
+{
+  "success": false,
+  "error": "Message d'erreur détaillé"
+}
+```
 
 ---
 
-## 📝 Exemples d'Intégration Backend
+## 💡 EXEMPLES D'UTILISATION
 
-### Express.js / Node.js
+### JavaScript (fetch)
 
 ```javascript
-const axios = require('axios');
-
-// Récupérer des opportunités pour un profil
-async function getOpportunitiesForProfile(profile) {
-  const response = await axios.get(
-    `http://localhost:3001/api/opportunities/profile/${profile}`
-  );
-  return response.data.data;
-}
+// Récupérer les 10 dernières opportunités
+fetch('http://localhost:3001/api/opportunities?limit=10')
+  .then(res => res.json())
+  .then(data => {
+    console.log(`Total: ${data.pagination.total}`);
+    data.data.forEach(opp => {
+      console.log(`- ${opp.title} (${opp.country})`);
+    });
+  });
 
 // Recherche
-async function searchOpportunities(query) {
-  const response = await axios.get(
-    `http://localhost:3001/api/search?q=${query}`
-  );
-  return response.data.data;
-}
+fetch('http://localhost:3001/api/search?q=python')
+  .then(res => res.json())
+  .then(data => {
+    console.log(`${data.count} résultats trouvés`);
+  });
+
+// Opportunités similaires
+fetch('http://localhost:3001/api/opportunities/42/similar?limit=5')
+  .then(res => res.json())
+  .then(data => {
+    data.data.forEach(opp => {
+      console.log(`${opp.title} - Similarité: ${(opp.similarity * 100).toFixed(1)}%`);
+    });
+  });
 ```
 
-### Python / Flask
+### Python (requests)
 
 ```python
 import requests
 
-def get_opportunities_for_profile(profile):
-    response = requests.get(
-        f'http://localhost:3001/api/opportunities/profile/{profile}'
-    )
-    return response.json()['data']
-
-def search_opportunities(query):
-    response = requests.get(
-        f'http://localhost:3001/api/search',
-        params={'q': query}
-    )
-    return response.json()['data']
-```
-
-### PHP / Laravel
-
-```php
-use Illuminate\Support\Facades\Http;
-
-function getOpportunitiesForProfile($profile) {
-    $response = Http::get(
-        "http://localhost:3001/api/opportunities/profile/{$profile}"
-    );
-    return $response->json()['data'];
-}
-```
-
----
-
-## 🧪 Tests
-
-```bash
-# Santé de l'API
-curl http://localhost:3001/api/health
-
-# Liste des opportunités
-curl http://localhost:3001/api/opportunities?limit=5
-
-# Recherche
-curl "http://localhost:3001/api/search?q=technologie"
+# Récupérer les opportunités
+response = requests.get('http://localhost:3001/api/opportunities', params={
+    'min_quality': 60,
+    'limit': 10
+})
+data = response.json()
+print(f"Total: {data['pagination']['total']}")
 
 # Statistiques
-curl http://localhost:3001/api/statistics
+stats = requests.get('http://localhost:3001/api/statistics').json()
+print(f"Opportunités avec NLP: {stats['data']['global']['with_nlp_analysis']}")
+
+# Données NLP
+nlp = requests.get('http://localhost:3001/api/opportunities/42/nlp').json()
+if nlp['has_nlp']:
+    print(f"Budgets détectés: {nlp['data']['nlp_amounts']}")
+```
+
+### cURL
+
+```bash
+# Liste des opportunités
+curl "http://localhost:3001/api/opportunities?limit=5"
+
+# Recherche
+curl "http://localhost:3001/api/search?q=agriculture"
+
+# Statistiques
+curl "http://localhost:3001/api/statistics"
+
+# Santé
+curl "http://localhost:3001/api/health"
 ```
 
 ---
 
-## ✅ Checklist d'Intégration
+## 🚀 DÉMARRAGE DE L'API
 
-- [ ] API démarrée et accessible
-- [ ] Base de données enrichie créée (`schema-enriched.sql`)
-- [ ] Données importées dans `opportunities_processed`
-- [ ] Tests des endpoints réussis
-- [ ] Configuration backend avec URL de l'API
-- [ ] Mapping des profils défini
-- [ ] Système d'attribution automatique développé (côté backend)
+```bash
+# Installation des dépendances
+npm install
+
+# Démarrer l'API
+npm start
+# ou
+node api-server.js
+
+# Avec PM2 (recommandé)
+pm2 start api-server.js --name gaynaako-api
+pm2 save
+```
+
+**L'API sera accessible sur** : `http://localhost:3001`
 
 ---
 
-**Version:** 1.0  
-**Date:** 31 août 2026  
-**Contact:** Équipe Gaynaako Collector
+## 📝 NOTES POUR LES DÉVELOPPEURS
+
+### Gestion des NULL en NLP
+
+Les colonnes NLP peuvent être `NULL` si :
+- L'opportunité a un `quality_score ≤ 50` (pas assez de données)
+- Le NLP n'a trouvé aucune information à extraire
+
+**Toujours gérer les NULL** :
+```javascript
+const budget = opportunity.nlp_amounts || ["Non spécifié"];
+const hasNLP = opportunity.nlp_processed_at !== null;
+```
+
+### Pagination
+
+Pour paginer correctement :
+```javascript
+const page = 2;
+const limit = 10;
+const offset = (page - 1) * limit;
+
+fetch(`/api/opportunities?limit=${limit}&offset=${offset}`)
+```
+
+### Similarité avec embeddings
+
+Le score de similarité cosinus va de 0 à 1 :
+- **> 0.8** : Très similaire
+- **0.5 - 0.8** : Similaire
+- **< 0.5** : Peu similaire
+
+---
+
+## 📧 SUPPORT
+
+Pour toute question sur l'API, contactez l'équipe Data Science.
+
+**Dernière mise à jour** : 2026-09-01

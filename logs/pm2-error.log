@@ -1,2 +1,6 @@
 2026-08-31 10:00:24 +00:00: ❌ Erreur: getaddrinfo ENOTFOUND www.adepme.sn
 2026-09-01 12:48:15 +00:00: [2026-09-01T12:48:15.102Z] [PID: 35980] [32m[NODE-CRON][32m [33m[WARN][0m missed execution at Tue Sep 01 2026 10:00:00 GMT+0000 (heure moyenne de Greenwich)! Possible blocking IO or high CPU user at the same process used by node-cron.
+2026-09-01 15:50:27 +00:00: ❌ Erreur: getaddrinfo ENOTFOUND www.adepme.sn
+2026-09-01 15:52:57 +00:00: Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-09-01 15:52:57 +00:00: Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights:  43%|####3     | 86/199 [00:00<00:00, 712.92it/s]Loading weights:  85%|########4 | 169/199 [00:00<00:00, 774.85it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 794.99it/s]
+2026-09-01 15:52:57 +00:00: 

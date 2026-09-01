@@ -18,8 +18,8 @@ app.use(express.json());
 const DB_CONFIG = {
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 3306,
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'rootpassword',
+  user: process.env.DB_USER || 'gaynaako_api',
+  password: process.env.DB_PASSWORD || 'apipassword123',
   database: process.env.DB_NAME || 'gaynaako_opportunities'
 };
 
@@ -29,6 +29,65 @@ const pool = mysql.createPool(DB_CONFIG);
 // ============================================
 // ROUTES API
 // ============================================
+
+/**
+ * GET /
+ * Page d'accueil de l'API
+ */
+app.get('/', (req, res) => {
+  res.json({
+    name: 'Gaynaako Opportunity Agent API',
+    version: '1.0.0',
+    status: 'online',
+    description: 'API REST pour les opportunités enrichies avec IA',
+    endpoints: {
+      health: '/api/health',
+      opportunities: {
+        list: '/api/opportunities?limit=10',
+        byId: '/api/opportunities/:id',
+        similar: '/api/opportunities/:id/similar',
+        nlp: '/api/opportunities/:id/nlp',
+        byProfile: '/api/opportunities/profile/:profiles'
+      },
+      search: '/api/search?q=keyword',
+      statistics: '/api/statistics',
+      reference: {
+        sectors: '/api/sectors',
+        countries: '/api/countries'
+      }
+    },
+    documentation: 'Voir API_DOCUMENTATION.md',
+    contact: 'contact@gaynaakoit.com'
+  });
+});
+
+/**
+ * GET /api
+ * Documentation API
+ */
+app.get('/api', (req, res) => {
+  res.json({
+    message: 'Bienvenue sur l\'API Gaynaako',
+    version: '1.0.0',
+    endpoints: [
+      'GET /api/health - Santé de l\'API',
+      'GET /api/opportunities - Liste des opportunités',
+      'GET /api/opportunities/:id - Détails d\'une opportunité',
+      'GET /api/opportunities/:id/similar - Opportunités similaires',
+      'GET /api/opportunities/:id/nlp - Données NLP',
+      'GET /api/opportunities/profile/:profiles - Par profils',
+      'GET /api/search?q=keyword - Recherche',
+      'GET /api/statistics - Statistiques',
+      'GET /api/sectors - Secteurs',
+      'GET /api/countries - Pays'
+    ],
+    examples: [
+      'http://localhost:3001/api/opportunities?limit=5',
+      'http://localhost:3001/api/search?q=python',
+      'http://localhost:3001/api/statistics'
+    ]
+  });
+});
 
 /**
  * GET /api/opportunities
@@ -189,7 +248,7 @@ app.get('/api/opportunities/profile/:profiles', async (req, res) => {
 
 /**
  * GET /api/statistics
- * Statistiques globales
+ * Statistiques globales (avec NLP intégré)
  */
 app.get('/api/statistics', async (req, res) => {
   try {
@@ -197,32 +256,16 @@ app.get('/api/statistics', async (req, res) => {
     const [stats] = await pool.query(`
       SELECT 
         COUNT(*) as total_opportunities,
+        COUNT(nlp_processed_at) as with_nlp_analysis,
         AVG(quality_score) as avg_quality_score,
+        AVG(nlp_quality_score) as avg_nlp_score,
         COUNT(DISTINCT country) as total_countries,
-        COUNT(DISTINCT source_name) as total_sources,
-        COUNT(CASE WHEN quality_score > 70 THEN 1 END) as high_quality_count
+        COUNT(CASE WHEN quality_score > 70 THEN 1 END) as high_quality_count,
+        COUNT(CASE WHEN nlp_amounts IS NOT NULL THEN 1 END) as with_budget,
+        COUNT(CASE WHEN nlp_deadlines IS NOT NULL THEN 1 END) as with_deadline,
+        COUNT(CASE WHEN nlp_organizations IS NOT NULL THEN 1 END) as with_organization,
+        COUNT(CASE WHEN nlp_emails IS NOT NULL THEN 1 END) as with_email
       FROM opportunities_processed
-    `);
-
-    // Par secteur
-    const [bySector] = await pool.query(`
-      SELECT 
-        s.name as sector,
-        COUNT(*) as count
-      FROM sectors s
-      INNER JOIN opportunities_processed op ON FIND_IN_SET(s.name, op.sectors) > 0
-      GROUP BY s.name
-      ORDER BY count DESC
-    `);
-
-    // Par pays
-    const [byCountry] = await pool.query(`
-      SELECT 
-        country,
-        COUNT(*) as count
-      FROM opportunities_processed
-      GROUP BY country
-      ORDER BY count DESC
     `);
 
     // Par public cible
@@ -231,6 +274,7 @@ app.get('/api/statistics', async (req, res) => {
         target_audience,
         COUNT(*) as count
       FROM opportunities_processed
+      WHERE target_audience IS NOT NULL
       GROUP BY target_audience
       ORDER BY count DESC
     `);
@@ -241,19 +285,41 @@ app.get('/api/statistics', async (req, res) => {
         urgency,
         COUNT(*) as count
       FROM opportunities_processed
+      WHERE urgency IS NOT NULL
       GROUP BY urgency
-      ORDER BY 
-        FIELD(urgency, 'Urgente', 'Haute', 'Normale', 'Flexible', 'Expirée')
+      ORDER BY count DESC
+    `);
+
+    // Par niveau d'expérience
+    const [byExperience] = await pool.query(`
+      SELECT 
+        experience_required,
+        COUNT(*) as count
+      FROM opportunities_processed
+      WHERE experience_required IS NOT NULL
+      GROUP BY experience_required
+      ORDER BY count DESC
+    `);
+
+    // Par gamme de budget
+    const [byBudget] = await pool.query(`
+      SELECT 
+        budget_range,
+        COUNT(*) as count
+      FROM opportunities_processed
+      WHERE budget_range IS NOT NULL
+      GROUP BY budget_range
+      ORDER BY count DESC
     `);
 
     res.json({
       success: true,
       data: {
         global: stats[0],
-        by_sector: bySector,
-        by_country: byCountry,
         by_audience: byAudience,
-        by_urgency: byUrgency
+        by_urgency: byUrgency,
+        by_experience: byExperience,
+        by_budget: byBudget
       }
     });
 
@@ -281,20 +347,21 @@ app.get('/api/search', async (req, res) => {
       });
     }
 
+    // Recherche simple avec LIKE
+    const searchPattern = `%${q}%`;
     const [opportunities] = await pool.query(
-      `SELECT *, 
-        MATCH(title, description, sectors) AGAINST(? IN NATURAL LANGUAGE MODE) as relevance
-       FROM opportunities_processed
-       WHERE MATCH(title, description, sectors) AGAINST(? IN NATURAL LANGUAGE MODE)
-       ORDER BY relevance DESC
+      `SELECT * FROM opportunities_processed
+       WHERE title LIKE ? OR description LIKE ? OR sectors LIKE ?
+       ORDER BY quality_score DESC, collected_at DESC
        LIMIT ?`,
-      [q, q, parseInt(limit)]
+      [searchPattern, searchPattern, searchPattern, parseInt(limit)]
     );
 
     res.json({
       success: true,
       data: opportunities,
-      count: opportunities.length
+      count: opportunities.length,
+      query: q
     });
 
   } catch (error) {
@@ -308,17 +375,31 @@ app.get('/api/search', async (req, res) => {
 
 /**
  * GET /api/sectors
- * Liste des secteurs disponibles
+ * Liste des secteurs disponibles (depuis les données)
  */
 app.get('/api/sectors', async (req, res) => {
   try {
-    const [sectors] = await pool.query(
-      'SELECT * FROM sectors ORDER BY name'
-    );
+    const [result] = await pool.query(`
+      SELECT DISTINCT sectors
+      FROM opportunities_processed
+      WHERE sectors IS NOT NULL AND sectors != ''
+    `);
+
+    // Extraire tous les secteurs uniques
+    const sectorsSet = new Set();
+    result.forEach(row => {
+      if (row.sectors) {
+        const sectors = row.sectors.split(',').map(s => s.trim());
+        sectors.forEach(s => sectorsSet.add(s));
+      }
+    });
+
+    const sectors = Array.from(sectorsSet).sort().map(s => ({ name: s }));
 
     res.json({
       success: true,
-      data: sectors
+      data: sectors,
+      count: sectors.length
     });
 
   } catch (error) {
@@ -332,17 +413,22 @@ app.get('/api/sectors', async (req, res) => {
 
 /**
  * GET /api/countries
- * Liste des pays disponibles
+ * Liste des pays disponibles (depuis les données)
  */
 app.get('/api/countries', async (req, res) => {
   try {
-    const [countries] = await pool.query(
-      'SELECT * FROM countries ORDER BY name'
-    );
+    const [countries] = await pool.query(`
+      SELECT DISTINCT country as name, COUNT(*) as count
+      FROM opportunities_processed
+      WHERE country IS NOT NULL AND country != ''
+      GROUP BY country
+      ORDER BY count DESC, country
+    `);
 
     res.json({
       success: true,
-      data: countries
+      data: countries,
+      count: countries.length
     });
 
   } catch (error) {
@@ -356,7 +442,7 @@ app.get('/api/countries', async (req, res) => {
 
 /**
  * GET /api/opportunities/:id/similar
- * Trouve les opportunités similaires
+ * Trouve les opportunités similaires (utilise embeddings)
  */
 app.get('/api/opportunities/:id/similar', async (req, res) => {
   try {
@@ -429,28 +515,51 @@ app.get('/api/opportunities/:id/similar', async (req, res) => {
 });
 
 /**
- * GET /api/opportunities/nlp/:id
- * Informations NLP extraites pour une opportunité
+ * GET /api/opportunities/:id/nlp
+ * Informations NLP extraites pour une opportunité (colonnes NLP intégrées)
  */
-app.get('/api/opportunities/nlp/:id', async (req, res) => {
+app.get('/api/opportunities/:id/nlp', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [nlpData] = await pool.query(
-      'SELECT * FROM opportunity_nlp WHERE opportunity_id = ?',
+    const [opportunity] = await pool.query(
+      `SELECT 
+        id,
+        title,
+        nlp_amounts,
+        nlp_deadlines,
+        nlp_organizations,
+        nlp_emails,
+        nlp_phones,
+        nlp_keywords,
+        nlp_quality_score,
+        nlp_processed_at
+      FROM opportunities_processed 
+      WHERE id = ?`,
       [id]
     );
 
-    if (nlpData.length === 0) {
+    if (opportunity.length === 0) {
       return res.status(404).json({
         success: false,
-        error: 'Données NLP non trouvées'
+        error: 'Opportunité non trouvée'
       });
     }
 
+    const data = opportunity[0];
+
+    // Parser les JSON
+    if (data.nlp_amounts) data.nlp_amounts = JSON.parse(data.nlp_amounts);
+    if (data.nlp_deadlines) data.nlp_deadlines = JSON.parse(data.nlp_deadlines);
+    if (data.nlp_organizations) data.nlp_organizations = JSON.parse(data.nlp_organizations);
+    if (data.nlp_emails) data.nlp_emails = JSON.parse(data.nlp_emails);
+    if (data.nlp_phones) data.nlp_phones = JSON.parse(data.nlp_phones);
+    if (data.nlp_keywords) data.nlp_keywords = JSON.parse(data.nlp_keywords);
+
     res.json({
       success: true,
-      data: nlpData[0]
+      data: data,
+      has_nlp: data.nlp_processed_at !== null
     });
 
   } catch (error) {
