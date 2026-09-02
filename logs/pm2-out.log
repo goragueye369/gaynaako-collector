@@ -435,3 +435,11 @@
 2026-09-01 15:52:57 +00:00: 
 2026-09-01 15:52:57 +00:00: 🎉 Le système est prêt pour l'attribution intelligente !
 2026-09-01 15:52:57 +00:00: 
+2026-09-02 09:33:08 +00:00: 🤖 Scheduler démarré (PIPELINE COMPLET)...
+2026-09-02 09:33:08 +00:00: 
+2026-09-02 09:33:08 +00:00: ⏰ Prochaine exécution : Tous les jours à 13h05 (TEST)
+2026-09-02 09:33:08 +00:00: 📋 Pipeline : Collecte → MySQL → NLP → Embeddings
+2026-09-02 09:33:08 +00:00: 📝 Logs : collector/logs/
+2026-09-02 09:33:08 +00:00: 
+2026-09-02 09:33:08 +00:00: ✅ Scheduler actif. Appuyez sur Ctrl+C pour arrêter.
+2026-09-02 09:33:08 +00:00: 
