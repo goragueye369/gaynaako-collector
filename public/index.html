@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gaynaako — Interface de Matching IA</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="logo">🌱 Gaynaako</div>
+    <span class="topbar-sub">Interface de Test — Moteur de Matching IA</span>
+    <div class="db-badges">
+      <span class="db-badge profils">🗄️ gaynaako_profils</span>
+      <span class="db-arrow">×</span>
+      <span class="db-badge opps">🗄️ gaynaako_opportunities</span>
+    </div>
+  </header>
+
+  <main class="layout">
+
+    <!-- Colonne Gauche : Sélection du Profil -->
+    <aside class="panel-left">
+      <h2 class="panel-title">👤 Sélectionner un Profil</h2>
+
+      <div class="role-filter" id="role-filter">
+        <button class="role-btn active" data-role="ALL">Tous</button>
+        <button class="role-btn" data-role="ENTREPRENEUR">👤 Entrepreneur</button>
+        <button class="role-btn" data-role="PME">🏢 PME</button>
+        <button class="role-btn" data-role="ONG">🌍 ONG</button>
+      </div>
+
+      <div id="profile-list" class="profile-list">
+        <div class="loading">Chargement des profils...</div>
+      </div>
+    </aside>
+
+    <!-- Colonne Droite : Résultats du Matching -->
+    <section class="panel-right">
+
+      <!-- Carte Profil Sélectionné -->
+      <div class="profile-card" id="profile-card" style="display:none;">
+        <div class="profile-card-header">
+          <div class="avatar" id="prof-avatar">?</div>
+          <div class="profile-card-info">
+            <h2 id="prof-name">—</h2>
+            <p id="prof-role-badge" class="role-badge">—</p>
+            <p id="prof-sub">—</p>
+          </div>
+        </div>
+        <div class="profile-card-details">
+          <p id="prof-sectors"><strong>Secteurs :</strong> —</p>
+          <p id="prof-mission"><strong>Objectifs / Mission :</strong> —</p>
+        </div>
+      </div>
+
+      <!-- Résultats -->
+      <div class="results-header" id="results-header" style="display:none;">
+        <h3>🏆 Recommandations <span id="results-count" class="count-badge">0</span></h3>
+        <p class="results-sub">Seuil ≥ 55% · Top 5 · <em>Prêtes pour <code>prisma.recommandation.createMany()</code></em></p>
+      </div>
+
+      <div id="results-list">
+        <div class="empty-state">
+          <span>🤖</span>
+          <p>Sélectionnez un profil pour lancer le matching</p>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
