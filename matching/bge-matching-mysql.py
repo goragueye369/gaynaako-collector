@@ -178,6 +178,13 @@ def main():
     conn_opp = mysql.connector.connect(**DB_OPPORTUNITIES)
 
     try:
+        # Nettoyage des anciennes recommandations algorithmiques pour éviter toute redondance
+        if not target_user_id:
+            cleanup_cur = conn_prof.cursor()
+            cleanup_cur.execute("DELETE FROM recommandations WHERE methode_matching = 'ALGORITHMIQUE'")
+            conn_prof.commit()
+            cleanup_cur.close()
+
         users = get_user_text(conn_prof, target_user_id)
         opps = get_opportunities(conn_opp)
 
@@ -234,7 +241,24 @@ def main():
                 print("⚠️ Aucune opportunité n'atteint le seuil minimal de 55% pour ce profil.\n")
                 continue
 
-            print(f"\n🏆 TOP {len(top5)} RECOMMANDATIONS PAR SIMILARITÉ IA ({model_name}) :\n")
+            # Sauvegarde dans gaynaako_profils.recommandations (remplace les anciennes par le nouveau Top 5)
+            prof_cursor = conn_prof.cursor()
+            prof_cursor.execute("DELETE FROM recommandations WHERE utilisateur_id = %s", (u['id'],))
+            for item in top5:
+                opp = item['opp']
+                rec_id = f"rec_{u['id']}_{opp['id']}"
+                prof_cursor.execute("""
+                    INSERT INTO recommandations (id, utilisateur_id, opportunite_id, score_pertinence, methode_matching)
+                    VALUES (%s, %s, %s, %s, 'IA_EMBEDDINGS')
+                    ON DUPLICATE KEY UPDATE
+                        score_pertinence = VALUES(score_pertinence),
+                        methode_matching = VALUES(methode_matching),
+                        date_generation = CURRENT_TIMESTAMP
+                """, (rec_id, u['id'], opp['id'], round(item['final_score'], 4)))
+            conn_prof.commit()
+            prof_cursor.close()
+
+            print(f"\n🏆 TOP {len(top5)} RECOMMANDATIONS PAR SIMILARITÉ IA ({model_name}) [Enregistrées en BDD] :\n")
             for rank, item in enumerate(top5, 1):
                 opp = item['opp']
                 pct = item['pct']

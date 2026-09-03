@@ -171,7 +171,20 @@ async function runMatching(userId = null) {
         continue;
       }
 
-      console.log(`\n🏆 ${qualified.length} RECOMMANDATION(S) :\n`);
+      // Sauvegarder dans la table recommandations de gaynaako_profils
+      for (const m of qualified) {
+        const recId = `rec_${user.id}_${m.opportunite.id}`;
+        await connProfils.query(`
+          INSERT INTO recommandations (id, utilisateur_id, opportunite_id, score_pertinence, methode_matching)
+          VALUES (?, ?, ?, ?, 'ALGORITHMIQUE')
+          ON DUPLICATE KEY UPDATE
+            score_pertinence = VALUES(score_pertinence),
+            methode_matching = VALUES(methode_matching),
+            date_generation = CURRENT_TIMESTAMP
+        `, [recId, user.id, m.opportunite.id, m.scorePertinence]);
+      }
+
+      console.log(`\n🏆 ${qualified.length} RECOMMANDATION(S) (enregistrées en BDD) :\n`);
       qualified.forEach((m, i) => {
         const pct = m.scorePourcentage;
         const bar = '█'.repeat(Math.round(pct / 10)) + '░'.repeat(10 - Math.round(pct / 10));
@@ -182,7 +195,7 @@ async function runMatching(userId = null) {
       });
     }
 
-    console.log('✅ Matching terminé avec succès !\n');
+    console.log('✅ Matching terminé et recommandations persistées en base !\n');
 
   } finally {
     await connProfils.end();

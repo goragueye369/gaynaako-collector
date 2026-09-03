@@ -198,7 +198,7 @@ async function setupPrismaSchema() {
     // ============================================================
     // CHARGEMENT DES PROFILS DE RÉFÉRENCE
     // ============================================================
-    const jsonPath = path.join(__dirname, 'data', 'benchmark_profiles.json');
+    const jsonPath = path.join(__dirname, '..', 'data', 'benchmark_profiles.json');
     const profiles = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 
     for (const p of profiles) {

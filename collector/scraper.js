@@ -357,7 +357,7 @@ async function scrapeSource(source) {
  * Sauvegarder en CSV
  */
 function saveToCSV(opportunities, filename) {
-  const csvDir = path.join(__dirname, 'data', 'raw');
+  const csvDir = path.join(__dirname, '..', 'data', 'raw');
   
   // Créer le dossier si nécessaire
   if (!fs.existsSync(csvDir)) {
