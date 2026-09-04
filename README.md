@@ -13,7 +13,8 @@ Ce module backend autonome gère l'ensemble du pipeline de données pour Gaynaak
 2. 🧹 **Nettoyage et normalisation** des données
 3. 🧠 **Enrichissement IA** : NLP, extraction d'entités, génération d'embeddings
 4. 🔍 **Matching sémantique** : Recommandation profils ↔ opportunités (BGE-M3)
-5. 📡 **API REST** : Exposition des données pour le backend principal (port 3001)
+5. 🎯 **Stratégie IA** : Priorisation, analyse des gaps, conseils personnalisés
+6. 📡 **API REST** : Exposition des données pour le backend principal (port 3001)
 
 ## 🏗️ Intégration dans l'Écosystème Gaynaako
 
