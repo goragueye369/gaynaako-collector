@@ -1,0 +1,137 @@
+[
+  {
+    "id": "usr-ent-001",
+    "email": "fatou.sow@gaynaako.sn",
+    "role": "ENTREPRENEUR",
+    "nom": "Fatou Sow",
+    "entrepreneur": {
+      "domaineExpertise": "Intelligence Artificielle, Machine Learning, Deep Learning, Python, NLP, Data Science",
+      "secteur": { "id": "sec-tech", "nom": "technologie" },
+      "pays": { "id": "pay-sn", "nom": "Sénégal", "code": "SN" },
+      "objectifs": "Développer et déployer des solutions d'IA et de modélisation prédictive pour les entreprises et institutions."
+    }
+  },
+  {
+    "id": "usr-ent-002",
+    "email": "moussa.diop@gaynaako.sn",
+    "role": "ENTREPRENEUR",
+    "nom": "Moussa Diop",
+    "entrepreneur": {
+      "domaineExpertise": "Ingénierie agronomique, Chaîne de valeur agricole, Élevage, Sécurité alimentaire, Irrigation rurale",
+      "secteur": { "id": "sec-agri", "nom": "agriculture" },
+      "pays": { "id": "pay-sn", "nom": "Sénégal", "code": "SN" },
+      "objectifs": "Structurer des projets agropastoraux et obtenir des financements d'organisations internationales (BAD, FIDA)."
+    }
+  },
+  {
+    "id": "usr-ent-003",
+    "email": "ibrahima.ba@gaynaako.sn",
+    "role": "ENTREPRENEUR",
+    "nom": "Ibrahima Ba",
+    "entrepreneur": {
+      "domaineExpertise": "Développement Web & Mobile, JavaScript, React, Node.js, Express, MySQL, API REST",
+      "secteur": { "id": "sec-tech", "nom": "technologie" },
+      "pays": { "id": "pay-sn", "nom": "Sénégal", "code": "SN" },
+      "objectifs": "Trouver des missions de développement d'applications numériques et d'intégration de systèmes."
+    }
+  },
+  {
+    "id": "usr-ent-004",
+    "email": "babacar.cisse@gaynaako.sn",
+    "role": "ENTREPRENEUR",
+    "nom": "Babacar Cissé",
+    "entrepreneur": {
+      "domaineExpertise": "Transformation de produits locaux, Agroalimentaire, Packaging, Gestion commerciale",
+      "secteur": { "id": "sec-agri", "nom": "agriculture" },
+      "pays": { "id": "pay-sn", "nom": "Sénégal", "code": "SN" },
+      "objectifs": "Accéder aux subventions ADEPME et DER pour moderniser notre unité de transformation céréalière."
+    }
+  },
+  {
+    "id": "usr-pme-001",
+    "email": "contact@sunu-solaire.sn",
+    "role": "PME",
+    "nom": "Sunu Solaire SARL",
+    "pme": {
+      "nomEntreprise": "Sunu Solaire SARL",
+      "secteurs": [
+        { "id": "sec-energy", "nom": "energie" },
+        { "id": "sec-infra", "nom": "infrastructure" }
+      ],
+      "logoUrl": "https://storage.gaynaako.sn/logos/sunu_solaire.png"
+    }
+  },
+  {
+    "id": "usr-pme-002",
+    "email": "contact@btp-sahel.sn",
+    "role": "PME",
+    "nom": "BTP Sahel Construction",
+    "pme": {
+      "nomEntreprise": "BTP Sahel Construction",
+      "secteurs": [
+        { "id": "sec-infra", "nom": "infrastructure" },
+        { "id": "sec-agri", "nom": "agriculture" }
+      ],
+      "logoUrl": "https://storage.gaynaako.sn/logos/btp_sahel.png"
+    }
+  },
+  {
+    "id": "usr-pme-003",
+    "email": "direction@finance-conseil.sn",
+    "role": "PME",
+    "nom": "Finance Conseil Afrique",
+    "pme": {
+      "nomEntreprise": "Finance Conseil Afrique",
+      "secteurs": [
+        { "id": "sec-fin", "nom": "finance" },
+        { "id": "sec-com", "nom": "commerce" }
+      ],
+      "logoUrl": "https://storage.gaynaako.sn/logos/finance_conseil.png"
+    }
+  },
+  {
+    "id": "usr-ong-001",
+    "email": "contact@action-sante-sahel.org",
+    "role": "ONG",
+    "nom": "Action Santé Sahel",
+    "ong": {
+      "nomOrganisation": "Action Santé Sahel",
+      "domainesIntervention": [
+        { "id": "dom-sante", "nom": "santé" },
+        { "id": "dom-eau", "nom": "eau" }
+      ],
+      "mission": "Améliorer l'accès aux soins de santé communautaire, vaccination et assainissement de l'eau en milieu rural.",
+      "logoUrl": "https://storage.gaynaako.sn/logos/sante_sahel.png"
+    }
+  },
+  {
+    "id": "usr-ong-002",
+    "email": "contact@alliance-climat.org",
+    "role": "ONG",
+    "nom": "Alliance Climat & Développement",
+    "ong": {
+      "nomOrganisation": "Alliance Climat & Développement",
+      "domainesIntervention": [
+        { "id": "dom-env", "nom": "environnement" },
+        { "id": "dom-energy", "nom": "energie" }
+      ],
+      "mission": "Promotion de la résilience climatique, transition écologique, études d'impact environnemental (EIES) et reboisement.",
+      "logoUrl": "https://storage.gaynaako.sn/logos/alliance_climat.png"
+    }
+  },
+  {
+    "id": "usr-ong-003",
+    "email": "contact@gouvernance-transparence.org",
+    "role": "ONG",
+    "nom": "Gouvernance & Commande Publique",
+    "ong": {
+      "nomOrganisation": "Gouvernance & Commande Publique",
+      "domainesIntervention": [
+        { "id": "dom-gouv", "nom": "gouvernance" },
+        { "id": "dom-infra", "nom": "infrastructure" }
+      ],
+      "mission": "Appui à la transparence, respect de la réglementation ARCOP et intégrité dans la passation des marchés publics.",
+      "logoUrl": "https://storage.gaynaako.sn/logos/gouvernance.png"
+    }
+  }
+]

@@ -193,7 +193,7 @@ async function importToMySQL(filePath) {
 async function main() {
   try {
     // Trouver le dernier fichier processed
-    const processedDir = path.join(__dirname, 'data', 'processed');
+    const processedDir = path.join(__dirname, '..', 'data', 'processed');
     
     if (!fs.existsSync(processedDir)) {
       console.error('❌ Le dossier data/processed/ n\'existe pas');

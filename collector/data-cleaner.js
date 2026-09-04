@@ -517,7 +517,7 @@ async function processData(inputFile) {
  * Sauvegarder les données nettoyées
  */
 async function saveCleanedData(opportunities) {
-  const outputDir = path.join(__dirname, 'data', 'processed');
+  const outputDir = path.join(__dirname, '..', 'data', 'processed');
   
   if (!fs.existsSync(outputDir)) {
     fs.mkdirSync(outputDir, { recursive: true });
@@ -625,7 +625,7 @@ function displayStats(opportunities) {
 async function main() {
   try {
     // Trouver le dernier fichier nettoyé
-    const cleanedDir = path.join(__dirname, 'data', 'cleaned');
+    const cleanedDir = path.join(__dirname, '..', 'data', 'cleaned');
     const cleanedFiles = fs.readdirSync(cleanedDir)
       .filter(f => f.endsWith('.csv'))
       .map(f => ({

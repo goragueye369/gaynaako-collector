@@ -4,3 +4,28 @@
 2026-09-01 15:52:57 +00:00: Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
 2026-09-01 15:52:57 +00:00: Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights:  43%|####3     | 86/199 [00:00<00:00, 712.92it/s]Loading weights:  85%|########4 | 169/199 [00:00<00:00, 774.85it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 794.99it/s]
 2026-09-01 15:52:57 +00:00: 
+2026-09-02 13:05:24 +00:00: ❌ Erreur: getaddrinfo ENOTFOUND www.adepme.sn
+2026-09-02 13:08:38 +00:00: Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-09-02 13:08:38 +00:00: Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 2602.19it/s]
+2026-09-02 13:08:38 +00:00: 
+2026-09-03 13:05:18 +00:00: ❌ Erreur: timeout of 15000ms exceeded
+2026-09-03 13:05:42 +00:00: ❌ Erreur: timeout of 15000ms exceeded
+2026-09-03 13:07:11 +00:00: ❌ Erreur lors de Analyse NLP (montants, deadlines, organisations):
+2026-09-03 13:07:11 +00:00: Command failed: python nlp-processor.py
+2026-09-03 13:07:11 +00:00: python: can't open file 'C:\\Users\\bmd\\Desktop\\Stage Sonatel\\gaynaako-collector\\nlp-processor.py': [Errno 2] No such file or directory
+2026-09-03 13:07:11 +00:00: 
+2026-09-03 13:07:11 +00:00: python: can't open file 'C:\\Users\\bmd\\Desktop\\Stage Sonatel\\gaynaako-collector\\nlp-processor.py': [Errno 2] No such file or directory
+2026-09-03 13:07:11 +00:00: 
+2026-09-03 13:07:11 +00:00: 
+2026-09-03 13:07:11 +00:00: ❌ Erreur lors du pipeline: Command failed: python nlp-processor.py
+2026-09-03 13:07:11 +00:00: python: can't open file 'C:\\Users\\bmd\\Desktop\\Stage Sonatel\\gaynaako-collector\\nlp-processor.py': [Errno 2] No such file or directory
+2026-09-03 13:07:11 +00:00: 
+2026-09-03 13:07:11 +00:00: Error: Command failed: python nlp-processor.py
+2026-09-03 13:07:11 +00:00: python: can't open file 'C:\\Users\\bmd\\Desktop\\Stage Sonatel\\gaynaako-collector\\nlp-processor.py': [Errno 2] No such file or directory
+2026-09-03 13:07:11 +00:00: 
+2026-09-03 13:07:11 +00:00:     at genericNodeError (node:internal/errors:985:15)
+2026-09-03 13:07:11 +00:00:     at wrappedFn (node:internal/errors:539:14)
+2026-09-03 13:07:11 +00:00:     at ChildProcess.exithandler (node:child_process:417:12)
+2026-09-03 13:07:11 +00:00:     at ChildProcess.emit (node:events:508:28)
+2026-09-03 13:07:11 +00:00:     at maybeClose (node:internal/child_process:1101:16)
+2026-09-03 13:07:11 +00:00:     at ChildProcess._handle.onexit (node:internal/child_process:305:5)

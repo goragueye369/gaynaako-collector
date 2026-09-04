@@ -88,6 +88,26 @@ module.exports = {
       kill_timeout: 3000,
       wait_ready: false,
       listen_timeout: 3000
+    },
+
+    // Interface Web Matching
+    {
+      name: 'gaynaako-ui',
+      script: 'server-ui.js',
+      cwd: './matching',
+      instances: 1,
+      exec_mode: 'fork',
+      env: {
+        NODE_ENV: 'production',
+        PORT: 3000
+      },
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '200M',
+      error_file: './logs/ui-error.log',
+      out_file: './logs/ui-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs: true
     }
   ]
 };

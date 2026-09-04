@@ -3,7 +3,7 @@
  * Usage: node test-automation.js
  */
 
-const { autoCollect } = require('./auto-collect');
+const { autoCollect } = require('./collector/auto-collect');
 
 console.log('🧪 TEST DE L\'AUTOMATISATION\n');
 console.log('Ce test va :');

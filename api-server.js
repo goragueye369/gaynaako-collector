@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Configuration MySQL
+// Configuration MySQL (Opportunités)
 const DB_CONFIG = {
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 3306,
@@ -23,8 +23,21 @@ const DB_CONFIG = {
   database: process.env.DB_NAME || 'gaynaako_opportunities'
 };
 
-// Pool de connexions
+// Configuration MySQL (Profils & Recommandations)
+const DB_PROFILS_CONFIG = {
+  host: process.env.DB_HOST || 'localhost',
+  port: process.env.DB_PORT || 3306,
+  user: process.env.DB_PROFILS_USER || 'root',
+  password: process.env.DB_PROFILS_PASSWORD !== undefined ? process.env.DB_PROFILS_PASSWORD : '',
+  database: process.env.DB_PROFILS_NAME || 'gaynaako_profils'
+};
+
+// Pools de connexions
 const pool = mysql.createPool(DB_CONFIG);
+const poolProfils = mysql.createPool(DB_PROFILS_CONFIG);
+const { exec } = require('child_process');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
 
 // ============================================
 // ROUTES API
@@ -54,6 +67,10 @@ app.get('/', (req, res) => {
       reference: {
         sectors: '/api/sectors',
         countries: '/api/countries'
+      },
+      recommendations: {
+        byUser: '/api/recommendations/:userId',
+        triggerMatching: 'POST /api/matching/run'
       }
     },
     documentation: 'Voir API_DOCUMENTATION.md',
@@ -79,7 +96,9 @@ app.get('/api', (req, res) => {
       'GET /api/search?q=keyword - Recherche',
       'GET /api/statistics - Statistiques',
       'GET /api/sectors - Secteurs',
-      'GET /api/countries - Pays'
+      'GET /api/countries - Pays',
+      'GET /api/recommendations/:userId - Top recommandations personnalisées d\'un profil',
+      'POST /api/matching/run - Déclencher le calcul et la persistance du matching'
     ],
     examples: [
       'http://localhost:3001/api/opportunities?limit=5',
@@ -440,6 +459,7 @@ app.get('/api/countries', async (req, res) => {
   }
 });
 
+
 /**
  * GET /api/opportunities/:id/similar
  * Trouve les opportunités similaires (utilise embeddings)
@@ -628,6 +648,100 @@ function cosineSimilarity(vec1, vec2) {
 
   return dotProduct / (norm1 * norm2);
 }
+
+/**
+ * GET /api/recommendations/:userId
+ * Récupère les recommandations calculées par IA pour un utilisateur
+ */
+app.get('/api/recommendations/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const limit = parseInt(req.query.limit) || 5;
+
+    // Récupérer les recommandations enregistrées pour cet utilisateur
+    const [recs] = await poolProfils.query(
+      `SELECT id, utilisateur_id, opportunite_id, score_pertinence, methode_matching, date_generation
+       FROM recommandations
+       WHERE utilisateur_id = ?
+       ORDER BY score_pertinence DESC
+       LIMIT ?`,
+      [userId, limit]
+    );
+
+    if (recs.length === 0) {
+      return res.json({
+        success: true,
+        userId,
+        count: 0,
+        recommendations: [],
+        message: 'Aucune recommandation trouvée pour ce profil'
+      });
+    }
+
+    // Récupérer les détails des opportunités correspondantes
+    const oppIds = recs.map(r => r.opportunite_id);
+    const placeholders = oppIds.map(() => '?').join(',');
+    const [opps] = await pool.query(
+      `SELECT id, title, description, url, sectors, country, quality_score,
+              date_original, date_normalized, has_date, target_audience, budget_range
+       FROM opportunities_processed
+       WHERE id IN (${placeholders})`,
+      oppIds
+    );
+
+    const oppMap = new Map(opps.map(o => [o.id, o]));
+
+    const combined = recs.map(r => ({
+      id: r.id,
+      score_pertinence: r.score_pertinence,
+      score_pourcentage: Math.round(r.score_pertinence * 100),
+      methode_matching: r.methode_matching,
+      date_generation: r.date_generation,
+      opportunite: oppMap.get(r.opportunite_id) || { id: r.opportunite_id, title: 'Opportunité non trouvée' }
+    }));
+
+    res.json({
+      success: true,
+      userId,
+      count: combined.length,
+      recommendations: combined
+    });
+
+  } catch (error) {
+    console.error('Erreur /api/recommendations:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/matching/run
+ * Déclenche le matching par IA sémantique à la demande
+ */
+app.post('/api/matching/run', async (req, res) => {
+  try {
+    const { userId } = req.body || {};
+    const command = userId ? `python matching/bge-matching-mysql.py ${userId}` : 'python matching/bge-matching-mysql.py';
+
+    const { stdout, stderr } = await execAsync(command, { cwd: __dirname });
+
+    res.json({
+      success: true,
+      message: 'Matching IA exécuté avec succès',
+      userId: userId || 'TOUS',
+      details: stdout.split('\n').slice(-10).join('\n')
+    });
+
+  } catch (error) {
+    console.error('Erreur /api/matching/run:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
 
 /**
  * GET /api/health
