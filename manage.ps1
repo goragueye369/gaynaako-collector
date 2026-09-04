@@ -65,13 +65,13 @@ switch ($Command.ToLower()) {
     "collect" {
         Write-Host "[COLLECT] Collecte manuelle..." -ForegroundColor Yellow
         Write-Host ""
-        node scraper.js
+        node collector/scraper.js
     }
     
     "auto" {
         Write-Host "[AUTO] Execution du pipeline complet..." -ForegroundColor Yellow
         Write-Host ""
-        node auto-collect.js
+        node pipeline-complet.js
     }
     
     "clean" {

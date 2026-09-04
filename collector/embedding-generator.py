@@ -16,8 +16,8 @@ import sys
 DB_CONFIG = {
     'host': 'localhost',
     'port': 3306,
-    'user': 'root',
-    'password': '',  # Pas de mot de passe (XAMPP par défaut)
+    'user': 'gaynaako_api',
+    'password': 'apipassword123',
     'database': 'gaynaako_opportunities'
 }
 

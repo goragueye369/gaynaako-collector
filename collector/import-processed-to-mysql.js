@@ -12,8 +12,8 @@ const csv = require('csv-parser');
 const DB_CONFIG = {
   host: process.env.DB_HOST || 'localhost',
   port: process.env.DB_PORT || 3306,
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',  // Pas de mot de passe (XAMPP par défaut)
+  user: process.env.DB_USER || 'gaynaako_api',
+  password: process.env.DB_PASSWORD || 'apipassword123',
   database: process.env.DB_NAME || 'gaynaako_opportunities'
 };
 
@@ -193,7 +193,7 @@ async function importToMySQL(filePath) {
 async function main() {
   try {
     // Trouver le dernier fichier processed
-    const processedDir = path.join(__dirname, 'data', 'processed');
+    const processedDir = path.join(__dirname, '..', 'data', 'processed');
     
     if (!fs.existsSync(processedDir)) {
       console.error('❌ Le dossier data/processed/ n\'existe pas');

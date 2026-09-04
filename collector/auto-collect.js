@@ -49,7 +49,7 @@ async function cleanData(inputFile) {
  * Sauvegarder les données nettoyées (basique)
  */
 function saveCleanedData(opportunities) {
-  const cleanedDir = path.join(__dirname, 'data', 'cleaned');
+  const cleanedDir = path.join(__dirname, '..', 'data', 'cleaned');
   
   if (!fs.existsSync(cleanedDir)) {
     fs.mkdirSync(cleanedDir, { recursive: true });
@@ -82,7 +82,7 @@ function saveCleanedData(opportunities) {
  * Sauvegarder les données enrichies (avec métadonnées)
  */
 async function saveProcessedData(opportunities) {
-  const processedDir = path.join(__dirname, 'data', 'processed');
+  const processedDir = path.join(__dirname, '..', 'data', 'processed');
   
   if (!fs.existsSync(processedDir)) {
     fs.mkdirSync(processedDir, { recursive: true });
@@ -127,7 +127,7 @@ async function saveProcessedData(opportunities) {
  * Trouver le dernier fichier CSV brut
  */
 function findLatestRawCSV() {
-  const rawDir = path.join(__dirname, 'data', 'raw');
+  const rawDir = path.join(__dirname, '..', 'data', 'raw');
   
   if (!fs.existsSync(rawDir)) {
     return null;

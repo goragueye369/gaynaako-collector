@@ -4,7 +4,7 @@
  * Usage: node pipeline-complet.js
  */
 
-const { autoCollect } = require('./auto-collect');
+const { autoCollect } = require('./collector/auto-collect');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
@@ -61,7 +61,7 @@ async function runPipeline() {
     console.log('═══════════════════════════════════════════════════\n');
     
     await runCommand(
-      'python nlp-processor.py',
+      'python collector/nlp-processor.py',
       'Analyse NLP (montants, deadlines, organisations)'
     );
 
@@ -71,8 +71,18 @@ async function runPipeline() {
     console.log('═══════════════════════════════════════════════════\n');
     
     await runCommand(
-      'python embedding-generator.py',
+      'python collector/embedding-generator.py',
       'Génération des vecteurs sémantiques'
+    );
+
+    // ÉTAPE 4 : Calcul et Mise à jour du Matching par IA Sémantique
+    console.log('\n═══════════════════════════════════════════════════');
+    console.log('PHASE 4 : RECOMMANDATIONS PAR IA (BGE-M3 / Embeddings)');
+    console.log('═══════════════════════════════════════════════════\n');
+    
+    await runCommand(
+      'python matching/bge-matching-mysql.py',
+      'Matching IA sémantique et persistance des recommandations'
     );
 
     // Résumé final
@@ -89,8 +99,9 @@ async function runPipeline() {
     console.log(`   ✅ Import dans MySQL (opportunities_processed)`);
     console.log(`   ✅ Analyse NLP (colonnes nlp_* dans MySQL)`);
     console.log(`   ✅ Embeddings (fichiers JSON dans data/embeddings/)`);
+    console.log(`   ✅ Matching sémantique IA (BGE-M3) & persistance des recommandations`);
     console.log(`\n📅 Date : ${new Date().toLocaleString('fr-FR')}`);
-    console.log(`\n🎉 Le système est prêt pour l'attribution intelligente !\n`);
+    console.log(`\n🎉 Le système de recommandation par IA est prêt et à jour !\n`);
 
   } catch (error) {
     console.error('\n❌ Erreur lors du pipeline:', error.message);

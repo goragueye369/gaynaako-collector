@@ -1,0 +1,17 @@
+2026-09-01 15:54:51 +00:00: Erreur: Error: Accès refusé pour l'utilisateur: 'root'@'@localhost' (mot de passe: OUI)
+2026-09-01 15:54:51 +00:00:     at C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\api-server.js:83:40
+2026-09-01 15:54:51 +00:00:     at Layer.handleRequest (C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\node_modules\router\lib\layer.js:152:17)
+2026-09-01 15:54:51 +00:00:     at next (C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\node_modules\router\lib\route.js:157:13)
+2026-09-01 15:54:51 +00:00:     at Route.dispatch (C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\node_modules\router\lib\route.js:117:3)
+2026-09-01 15:54:51 +00:00:     at handle (C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\node_modules\router\index.js:435:11)
+2026-09-01 15:54:51 +00:00:     at Layer.handleRequest (C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\node_modules\router\lib\layer.js:152:17)
+2026-09-01 15:54:51 +00:00:     at C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\node_modules\router\index.js:295:15
+2026-09-01 15:54:51 +00:00:     at processParams (C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\node_modules\router\index.js:582:12)
+2026-09-01 15:54:51 +00:00:     at next (C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\node_modules\router\index.js:291:5)
+2026-09-01 15:54:51 +00:00:     at read (C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\node_modules\body-parser\lib\read.js:53:5) {
+2026-09-01 15:54:51 +00:00:   code: 'ER_ACCESS_DENIED_ERROR',
+2026-09-01 15:54:51 +00:00:   errno: 1045,
+2026-09-01 15:54:51 +00:00:   sqlState: '28000',
+2026-09-01 15:54:51 +00:00:   sqlMessage: "Accès refusé pour l'utilisateur: 'root'@'@localhost' (mot de passe: OUI)",
+2026-09-01 15:54:51 +00:00:   sql: undefined
+2026-09-01 15:54:51 +00:00: }
