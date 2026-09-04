@@ -71,6 +71,9 @@ app.get('/', (req, res) => {
       recommendations: {
         byUser: '/api/recommendations/:userId',
         triggerMatching: 'POST /api/matching/run'
+      },
+      strategy: {
+        byUser: '/api/strategy/:userId'
       }
     },
     documentation: 'Voir API_DOCUMENTATION.md',
@@ -98,6 +101,7 @@ app.get('/api', (req, res) => {
       'GET /api/sectors - Secteurs',
       'GET /api/countries - Pays',
       'GET /api/recommendations/:userId - Top recommandations personnalisées d\'un profil',
+      'GET /api/strategy/:userId - Diagnostic stratégique & plan d\'action IA d\'un profil',
       'POST /api/matching/run - Déclencher le calcul et la persistance du matching'
     ],
     examples: [
@@ -744,6 +748,27 @@ app.post('/api/matching/run', async (req, res) => {
 });
 
 /**
+ * GET /api/strategy/:userId
+ * Diagnostic stratégique, priorités et roadmap de candidature personnalisée
+ */
+app.get('/api/strategy/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { generateUserStrategy } = require('./matching/strategy-engine');
+
+    const strategy = await generateUserStrategy(userId);
+    res.json(strategy);
+
+  } catch (error) {
+    console.error('Erreur /api/strategy:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
  * GET /api/health
  * Santé de l'API
  */
@@ -761,6 +786,114 @@ app.get('/api/health', async (req, res) => {
     res.status(500).json({
       success: false,
       status: 'unhealthy',
+      error: error.message
+    });
+  }
+});
+
+// ============================================
+// ENDPOINTS MODULE 2 : STRATÉGIE
+// ============================================
+
+/**
+ * GET /api/strategy/:userId
+ * Rapport stratégique complet pour un utilisateur
+ */
+app.get('/api/strategy/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const useRecommendations = req.query.recommendations === 'true';
+    
+    const { exec } = require('child_process');
+    const util = require('util');
+    const execAsync = util.promisify(exec);
+    
+    const command = useRecommendations 
+      ? `python strategy-advisor.py ${userId} --use-recs`
+      : `python strategy-advisor.py ${userId}`;
+    
+    const { stdout } = await execAsync(command, { 
+      cwd: __dirname,
+      timeout: 30000
+    });
+    
+    // Parse the output to extract JSON data
+    // For now, just return success with a message
+    res.json({
+      success: true,
+      message: 'Rapport stratégique généré',
+      userId,
+      strategyAvailable: true,
+      details: 'Le rapport stratégique est disponible via l\'interface ou en mode complet'
+    });
+
+  } catch (error) {
+    console.error('Erreur /api/strategy:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/strategy/:userId/prioritize
+ * Priorisation des opportunités
+ */
+app.get('/api/strategy/:userId/prioritize', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    res.json({
+      success: true,
+      message: 'Endpoint en cours de développement',
+      info: 'Cette fonctionnalité permet de prioriser les opportunités pour un profil'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/strategy/:userId/skill-gaps
+ * Analyse des gaps de compétences
+ */
+app.get('/api/strategy/:userId/skill-gaps', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    res.json({
+      success: true,
+      message: 'Endpoint en cours de développement',
+      info: 'Cette fonctionnalité analyse les compétences manquantes'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+/**
+ * GET /api/strategy/:userId/tips
+ * Conseils d'optimisation
+ */
+app.get('/api/strategy/:userId/tips', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    res.json({
+      success: true,
+      message: 'Endpoint en cours de développement',
+      info: 'Cette fonctionnalité fournit des conseils personnalisés'
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
       error: error.message
     });
   }

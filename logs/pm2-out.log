@@ -906,3 +906,11 @@
 2026-09-03 13:07:18 +00:00: 
 2026-09-03 13:07:18 +00:00: ✅ Scheduler actif. Appuyez sur Ctrl+C pour arrêter.
 2026-09-03 13:07:18 +00:00: 
+2026-09-04 09:52:42 +00:00: 🤖 Scheduler démarré (PIPELINE COMPLET)...
+2026-09-04 09:52:42 +00:00: 
+2026-09-04 09:52:42 +00:00: ⏰ Prochaine exécution : Tous les jours à 13h05 (TEST)
+2026-09-04 09:52:42 +00:00: 📋 Pipeline : Collecte → MySQL → NLP → Embeddings
+2026-09-04 09:52:42 +00:00: 📝 Logs : collector/logs/
+2026-09-04 09:52:42 +00:00: 
+2026-09-04 09:52:42 +00:00: ✅ Scheduler actif. Appuyez sur Ctrl+C pour arrêter.
+2026-09-04 09:52:42 +00:00: 
