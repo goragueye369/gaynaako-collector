@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gaynaako — Interface de Matching IA</title>
+  <title>Gaynaako — Interface de Test Matching & Stratégie IA</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <header class="topbar">
     <div class="logo">🌱 Gaynaako</div>
-    <span class="topbar-sub">Interface de Test — Moteur de Matching IA</span>
+    <span class="topbar-sub">Plateforme de Test — Matching & Conseiller Stratégique IA</span>
     <div class="db-badges">
       <span class="db-badge profils">🗄️ gaynaako_profils</span>
       <span class="db-arrow">×</span>
@@ -23,7 +23,7 @@
 
     <!-- Colonne Gauche : Sélection du Profil -->
     <aside class="panel-left">
-      <h2 class="panel-title">👤 Sélectionner un Profil</h2>
+      <h2 class="panel-title">👤 Profils Utilisateurs</h2>
 
       <div class="role-filter" id="role-filter">
         <button class="role-btn active" data-role="ALL">Tous</button>
@@ -37,7 +37,7 @@
       </div>
     </aside>
 
-    <!-- Colonne Droite : Résultats du Matching -->
+    <!-- Colonne Droite : Contenu Principal -->
     <section class="panel-right">
 
       <!-- Carte Profil Sélectionné -->
@@ -51,21 +51,39 @@
           </div>
         </div>
         <div class="profile-card-details">
-          <p id="prof-sectors"><strong>Secteurs :</strong> —</p>
+          <p id="prof-sectors"><strong>Secteurs / Domaines :</strong> —</p>
           <p id="prof-mission"><strong>Objectifs / Mission :</strong> —</p>
         </div>
       </div>
 
-      <!-- Résultats -->
-      <div class="results-header" id="results-header" style="display:none;">
-        <h3>🏆 Recommandations <span id="results-count" class="count-badge">0</span></h3>
-        <p class="results-sub">Seuil ≥ 55% · Top 5 · <em>Prêtes pour <code>prisma.recommandation.createMany()</code></em></p>
+      <!-- Navigation par Onglets -->
+      <div class="tabs-nav" id="tabs-nav" style="display:none;">
+        <button class="tab-btn active" data-tab="strategy">🎯 Stratégie & Plan d'Action IA</button>
+        <button class="tab-btn" data-tab="matching">🏆 Recommandations & Matching</button>
       </div>
 
-      <div id="results-list">
-        <div class="empty-state">
-          <span>🤖</span>
-          <p>Sélectionnez un profil pour lancer le matching</p>
+      <!-- Contenu Onglet 1 : Stratégie IA -->
+      <div class="tab-content" id="tab-strategy">
+        <div id="strategy-view">
+          <div class="empty-state">
+            <span>🎯</span>
+            <p>Sélectionnez un profil pour générer son analyse stratégique IA</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenu Onglet 2 : Matching Classique -->
+      <div class="tab-content" id="tab-matching" style="display:none;">
+        <div class="results-header" id="results-header" style="display:none;">
+          <h3>🏆 Top Opportunités Matchées <span id="results-count" class="count-badge">0</span></h3>
+          <p class="results-sub">Seuil ≥ 55% · Calculé avec les règles d'attribution & IA sémantique</p>
+        </div>
+
+        <div id="results-list">
+          <div class="empty-state">
+            <span>🤖</span>
+            <p>Sélectionnez un profil pour lancer le matching</p>
+          </div>
         </div>
       </div>
 

@@ -29,3 +29,21 @@
 2026-09-03 13:07:11 +00:00:     at ChildProcess.emit (node:events:508:28)
 2026-09-03 13:07:11 +00:00:     at maybeClose (node:internal/child_process:1101:16)
 2026-09-03 13:07:11 +00:00:     at ChildProcess._handle.onexit (node:internal/child_process:305:5)
+2026-09-05 13:09:30 +00:00: Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-09-05 13:09:30 +00:00: Loading weights:   0%|          | 0/199 [00:00<?, ?it/s]Loading weights:  90%|########9 | 179/199 [00:00<00:00, 1717.85it/s]Loading weights: 100%|##########| 199/199 [00:00<00:00, 1873.65it/s]
+2026-09-05 13:09:30 +00:00: 
+2026-09-05 13:09:33 +00:00: ❌ Erreur lors de Matching IA sémantique et persistance des recommandations:
+2026-09-05 13:09:33 +00:00: Command failed: python matching/bge-matching-mysql.py
+2026-09-05 13:09:33 +00:00: 
+2026-09-05 13:09:33 +00:00: 
+2026-09-05 13:09:33 +00:00: ❌ Erreur lors du pipeline: Command failed: python matching/bge-matching-mysql.py
+2026-09-05 13:09:33 +00:00: 
+2026-09-05 13:09:33 +00:00: Error: Command failed: python matching/bge-matching-mysql.py
+2026-09-05 13:09:33 +00:00: 
+2026-09-05 13:09:33 +00:00:     at genericNodeError (node:internal/errors:985:15)
+2026-09-05 13:09:33 +00:00:     at wrappedFn (node:internal/errors:539:14)
+2026-09-05 13:09:33 +00:00:     at ChildProcess.exithandler (node:child_process:417:12)
+2026-09-05 13:09:33 +00:00:     at ChildProcess.emit (node:events:508:28)
+2026-09-05 13:09:33 +00:00:     at maybeClose (node:internal/child_process:1101:16)
+2026-09-05 13:09:33 +00:00:     at ChildProcess._handle.onexit (node:internal/child_process:305:5)
+2026-09-06 15:05:59 +00:00: [2026-09-06T15:05:58.859Z] [PID: 41008] [32m[NODE-CRON][32m [33m[WARN][0m missed execution at Sun Sep 06 2026 13:05:00 GMT+0000 (heure moyenne de Greenwich)! Possible blocking IO or high CPU user at the same process used by node-cron.

@@ -123,6 +123,17 @@ app.post('/api/match', async (req, res) => {
   }
 });
 
+// ─── API : Stratégie IA & Plan d'Action ─────────────────────────────────────
+app.get('/api/strategy/:userId', async (req, res) => {
+  try {
+    const { generateUserStrategy } = require('./strategy-engine');
+    const strategy = await generateUserStrategy(req.params.userId);
+    res.json(strategy);
+  } catch (e) {
+    res.status(500).json({ success: false, error: e.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log('╔══════════════════════════════════════════════════════╗');
   console.log('║   🌟 INTERFACE MATCHING GAYNAAKO — PORT 3000          ║');
