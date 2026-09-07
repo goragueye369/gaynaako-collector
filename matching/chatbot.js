@@ -9,27 +9,36 @@
 
 require('dotenv').config();
 
-const Groq   = require('groq-sdk');
-const mysql  = require('mysql2/promise');
+const Groq = require('groq-sdk');
+const mysql = require('mysql2/promise');
 const { v4: uuidv4 } = require('uuid');
 
 // ─── Configuration ──────────────────────────────────────────────────────────
 
 const DB_CONFIG = {
-  host    : process.env.DB_HOST     || 'localhost',
-  port    : parseInt(process.env.DB_PORT) || 3306,
-  user    : process.env.DB_USER     || 'root',
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT) || 3306,
+  user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME     || 'gaynaako_opportunities',
+  database: process.env.DB_NAME || 'gaynaako_opportunities',
 };
 
-const GROQ_MODEL   = 'qwen/qwen3.8-27b';
-const MAX_HISTORY  = 10;   // nb de messages à inclure dans le contexte
-const MAX_OPPS     = 5;    // nb d'opportunités RAG à injecter
-const MAX_TOKENS   = 1024; // longueur max de la réponse
+const DB_PROFILS_CONFIG = {
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT) || 3306,
+  user: process.env.DB_PROFILS_USER || process.env.DB_USER || 'root',
+  password: process.env.DB_PROFILS_PASSWORD !== undefined ? process.env.DB_PROFILS_PASSWORD : (process.env.DB_PASSWORD || ''),
+  database: process.env.DB_PROFILS_NAME || 'gaynaako_profils',
+};
+
+const GROQ_MODEL = process.env.GROQ_MODEL || 'qwen/qwen3.6-27b';
+const MAX_HISTORY = 10;   // nb de messages à inclure dans le contexte
+const MAX_OPPS = 5;    // nb d'opportunités RAG à injecter
+const MAX_TOKENS = parseInt(process.env.MAX_TOKENS) || 600; // max tokens de réponse pour respecter le quota Groq (1000 OTPM)
 
 // Prompt système — personnalité + rôle de l'assistant
-const SYSTEM_PROMPT = `Tu es Gaynaako, un assistant IA spécialisé dans les opportunités professionnelles et de financement en Afrique de l'Ouest (Sénégal, Mali, Côte d'Ivoire, Burkina Faso, etc.).
+const SYSTEM_PROMPT = `/no_think
+Tu es Gaynaako, un assistant IA spécialisé dans les opportunités professionnelles et de financement en Afrique de l'Ouest (Sénégal, Mali, Côte d'Ivoire, Burkina Faso, etc.).
 
 Tu aides les utilisateurs à :
 - Trouver des opportunités d'affaires, appels d'offres et financements adaptés à leur profil
@@ -38,8 +47,10 @@ Tu aides les utilisateurs à :
 - Rédiger des candidatures et propositions
 - Obtenir des conseils de carrière et de développement professionnel
 
-Règles importantes :
-- Réponds TOUJOURS en français, de manière claire et professionnelle
+Règles STRICTES et NON NÉGOCIABLES :
+- Réponds TOUJOURS et UNIQUEMENT en français. JAMAIS en anglais.
+- N'affiche JAMAIS tes pensées internes, étapes de raisonnement ou processus de réflexion.
+- Va DIRECTEMENT à la réponse finale sans préambule.
 - Quand tu présentes des opportunités, formate-les proprement avec les détails clés
 - Si une opportunité est disponible dans les données, cite-la précisément (titre, source, pays, secteur)
 - Si tu n'as pas assez d'informations, dis-le honnêtement et suggère comment l'utilisateur peut chercher plus
@@ -49,12 +60,20 @@ Règles importantes :
 // ─── Pool MySQL ──────────────────────────────────────────────────────────────
 
 let pool;
+let poolProfils;
 
 async function getPool() {
   if (!pool) {
     pool = mysql.createPool({ ...DB_CONFIG, waitForConnections: true, connectionLimit: 10 });
   }
   return pool;
+}
+
+async function getProfilsPool() {
+  if (!poolProfils) {
+    poolProfils = mysql.createPool({ ...DB_PROFILS_CONFIG, waitForConnections: true, connectionLimit: 10 });
+  }
+  return poolProfils;
 }
 
 // ─── Chargement du profil utilisateur ────────────────────────────────────────
@@ -67,30 +86,33 @@ async function loadUserProfile(userId) {
   if (!userId || userId === 'anonymous' || userId.startsWith('__')) return null;
 
   try {
-    const db = await getPool();
+    const db = await getProfilsPool();
 
     // Infos de base
     const [users] = await db.query(
-      `SELECT id, email, role, statut FROM utilisateurs WHERE id = ? AND statut = 'ACTIF'`,
-      [userId]
+      `SELECT id, email, role, statut FROM utilisateurs WHERE (id = ? OR email = ?) AND (statut = 'ACTIF' OR statut IS NULL)`,
+      [userId, userId]
     );
     if (!users.length) return null;
 
-    const user    = users[0];
-    let   profile = { ...user };
+    const user = users[0];
+    let profile = { ...user };
 
     switch (user.role) {
       case 'ENTREPRENEUR': {
         const [rows] = await db.query(
-          `SELECT ep.domaine_expertise, ep.objectifs,
+          `SELECT ep.nom_complet, ep.domaine_expertise, ep.objectifs,
                   s.nom AS secteur, p.nom AS pays
            FROM entrepreneur_profiles ep
-           JOIN secteurs s ON s.id = ep.secteur_id
-           JOIN pays     p ON p.id = ep.pays_id
+           LEFT JOIN secteurs s ON s.id = ep.secteur_id
+           LEFT JOIN pays     p ON p.id = ep.pays_id
            WHERE ep.utilisateur_id = ?`,
-          [userId]
+          [user.id]
         );
-        if (rows.length) Object.assign(profile, rows[0]);
+        if (rows.length) {
+          Object.assign(profile, rows[0]);
+          profile.nom = rows[0].nom_complet || user.email.split('@')[0];
+        }
         break;
       }
       case 'PME': {
@@ -98,13 +120,16 @@ async function loadUserProfile(userId) {
           `SELECT pp.nom_entreprise,
                   GROUP_CONCAT(s.nom SEPARATOR ', ') AS secteurs
            FROM pme_profiles pp
-           LEFT JOIN pme_secteurs ps ON ps.pme_id = pp.id
-           LEFT JOIN secteurs     s  ON s.id = ps.secteur_id
+           LEFT JOIN pme_profiles_secteurs ps ON ps.pme_id = pp.id
+           LEFT JOIN secteurs              s  ON s.id = ps.secteur_id
            WHERE pp.utilisateur_id = ?
            GROUP BY pp.id`,
-          [userId]
+          [user.id]
         );
-        if (rows.length) Object.assign(profile, rows[0]);
+        if (rows.length) {
+          Object.assign(profile, rows[0]);
+          profile.nom = rows[0].nom_entreprise;
+        }
         break;
       }
       case 'ONG': {
@@ -112,21 +137,20 @@ async function loadUserProfile(userId) {
           `SELECT op.nom_organisation, op.mission,
                   GROUP_CONCAT(d.nom SEPARATOR ', ') AS domaines
            FROM ong_profiles op
-           LEFT JOIN ong_domaines           od ON od.ong_id = op.id
+           LEFT JOIN ong_profiles_domaines  od ON od.ong_id = op.id
            LEFT JOIN domaines_intervention  d  ON d.id = od.domaine_id
            WHERE op.utilisateur_id = ?
            GROUP BY op.id`,
-          [userId]
+          [user.id]
         );
-        if (rows.length) Object.assign(profile, rows[0]);
+        if (rows.length) {
+          Object.assign(profile, rows[0]);
+          profile.nom = rows[0].nom_organisation;
+        }
         break;
       }
-      case 'ADMINISTRATEUR': {
-        const [rows] = await db.query(
-          `SELECT niveau_acces FROM administrateur_profiles WHERE utilisateur_id = ?`,
-          [userId]
-        );
-        if (rows.length) Object.assign(profile, rows[0]);
+      default: {
+        profile.nom = user.email.split('@')[0];
         break;
       }
     }
@@ -241,10 +265,10 @@ function extractCountry(message) {
  * Recherche RAG dans MySQL — retourne les opportunités pertinentes
  */
 async function retrieveRelevantOpportunities(message) {
-  const db       = await getPool();
-  const intent   = detectIntent(message);
+  const db = await getPool();
+  const intent = detectIntent(message);
   const keywords = extractKeywords(message);
-  const country  = extractCountry(message);
+  const country = extractCountry(message);
 
   let opportunities = [];
 
@@ -260,26 +284,30 @@ async function retrieveRelevantOpportunities(message) {
         .join(' ');
 
       if (searchTerms) {
-        const [rows] = await db.query(
-          `SELECT id, source_name, title, description, url, country, sectors,
-                  quality_score, urgency, target_audience, budget_range,
-                  experience_required, suggested_profiles, date_normalized,
-                  MATCH(title, description, sectors) AGAINST(? IN NATURAL LANGUAGE MODE) AS relevance
-           FROM opportunities_processed
-           WHERE MATCH(title, description, sectors) AGAINST(? IN NATURAL LANGUAGE MODE)
-             AND quality_score > 30
-           ORDER BY relevance DESC, quality_score DESC
-           LIMIT ?`,
-          [searchTerms, searchTerms, MAX_OPPS]
-        );
-        opportunities = rows;
+        try {
+          const [rows] = await db.query(
+            `SELECT id, source_name, title, description, url, country, sectors,
+                    quality_score, urgency, target_audience, budget_range,
+                    experience_required, suggested_profiles, date_normalized,
+                    MATCH(title, description, sectors) AGAINST(? IN NATURAL LANGUAGE MODE) AS relevance
+             FROM opportunities_processed
+             WHERE MATCH(title, description, sectors) AGAINST(? IN NATURAL LANGUAGE MODE)
+               AND quality_score > 30
+             ORDER BY relevance DESC, quality_score DESC
+             LIMIT ?`,
+            [searchTerms, searchTerms, MAX_OPPS]
+          );
+          opportunities = rows;
+        } catch (_ftErr) {
+          // Index FULLTEXT non présent dans la table, on continue vers le fallback
+        }
       }
     }
 
     // ── Fallback : filtre par secteur/pays si fulltext sans résultat ──────
     if (opportunities.length === 0) {
       let whereClause = 'WHERE quality_score > 30';
-      const params    = [];
+      const params = [];
 
       if (keywords.length > 0) {
         const sectorConditions = keywords.map(() => 'FIND_IN_SET(?, sectors) > 0').join(' OR ');
@@ -407,7 +435,7 @@ async function getConversationHistory(sessionId, limit = MAX_HISTORY) {
 
 async function createSession(userId, title = 'Nouvelle conversation') {
   try {
-    const db        = await getPool();
+    const db = await getPool();
     const sessionId = uuidv4();
     await db.query(
       `INSERT INTO chat_sessions (id, user_id, title) VALUES (?, ?, ?)`,
@@ -422,7 +450,7 @@ async function createSession(userId, title = 'Nouvelle conversation') {
 
 async function updateSessionTitle(sessionId, firstUserMessage) {
   try {
-    const db    = await getPool();
+    const db = await getPool();
     const title = firstUserMessage.substring(0, 60) + (firstUserMessage.length > 60 ? '...' : '');
     await db.query(
       `UPDATE chat_sessions SET title = ?, message_count = message_count + 2 WHERE id = ?`,
@@ -485,7 +513,7 @@ async function generateResponse(userMessage, sessionId, userId = 'anonymous') {
   const history = await getConversationHistory(sessionId);
 
   // 4. Construire le prompt avec contexte RAG + profil utilisateur
-  const ragContext     = formatOpportunitiesForContext(opportunities);
+  const ragContext = formatOpportunitiesForContext(opportunities);
   const profileContext = formatUserProfileForPrompt(userProfile);
 
   const contextBlock = `
@@ -514,19 +542,43 @@ ${country ? `[PAYS DÉTECTÉ] : ${country}` : ''}
 
   // 6. Appel Groq
   let assistantResponse = '';
-  let suggestions       = [];
+  let suggestions = [];
 
   try {
-    const groq   = new Groq({ apiKey: process.env.GROQ_API_KEY });
-    const chat   = await groq.chat.completions.create({
-      model      : GROQ_MODEL,
+    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
+    const chat = await groq.chat.completions.create({
+      model: GROQ_MODEL,
       messages,
-      max_tokens : MAX_TOKENS,
+      max_tokens: MAX_TOKENS,
       temperature: 0.7,
-      top_p      : 0.9,
+      top_p: 0.9,
+      reasoning_effort: 'none',
     });
 
     assistantResponse = chat.choices[0]?.message?.content || 'Désolé, je n\'ai pas pu générer une réponse.';
+
+    // ─── Nettoyage complet des blocs de pensée Qwen ───────────────────────────
+    (function cleanThinking() {
+      if (assistantResponse.includes('</think>')) {
+        assistantResponse = assistantResponse.split('</think>').pop().trim();
+        return;
+      }
+      const frenchStart = assistantResponse.search(
+        /(?:^|\n)(Bonjour|Salut|Ravi|Je suis|Voici|En tant que|Pour vous|Parfait|D'accord|Super|Bien sûr|Absolument|Concernant|À propos|Gaynaako|# |🌾\n[A-Z])/im
+      );
+      if (frenchStart !== -1) {
+        assistantResponse = assistantResponse.slice(frenchStart).trim();
+      }
+      assistantResponse = assistantResponse
+        .split('\n')
+        .filter(line => !/^\s*(\d+\.\s+\*\*(?:Analyze|Identify|Determine|Draft|Check|Self-Correction|Formulate|Critique)|Critique \d+:|Draft \d+:|Mental:|User said:|Input:|Context:|Language:|Tone:|Goal:|Persona:|Observation:|Strategy:|Here'?s a thinking)/i.test(line))
+        .join('\n');
+    })();
+    assistantResponse = assistantResponse.replace(/\d+\.\s+\*\*Self-Correction[\s\S]*/gi, '').replace(/<\/?think>/gi, '').trim();
+
+    if (!assistantResponse || /^(\s*\d+\.|\s*\*\*Analyze)/i.test(assistantResponse)) {
+      assistantResponse = "Bonjour ! Je suis **Gaynaako**, votre assistant pour les opportunités professionnelles et financements en Afrique de l'Ouest.\n\nComment puis-je vous aider ?";
+    }
 
     // Extraire des suggestions d'actions selon l'intention
     suggestions = buildSuggestions(intent, opportunities);
@@ -553,7 +605,7 @@ ${country ? `[PAYS DÉTECTÉ] : ${country}` : ''}
     duration_ms: Date.now() - startTime,
   };
 
-  await saveMessage(sessionId, userId, 'user',      userMessage,       null);
+  await saveMessage(sessionId, userId, 'user', userMessage, null);
   await saveMessage(sessionId, userId, 'assistant', assistantResponse, metadata);
 
   // Mettre à jour le titre de session si c'est le premier message
@@ -562,12 +614,12 @@ ${country ? `[PAYS DÉTECTÉ] : ${country}` : ''}
   }
 
   return {
-    response          : assistantResponse,
-    session_id        : sessionId,
+    response: assistantResponse,
+    session_id: sessionId,
     intent,
     opportunities_used: opportunities.length,
     suggestions,
-    duration_ms       : Date.now() - startTime,
+    duration_ms: Date.now() - startTime,
   };
 }
 

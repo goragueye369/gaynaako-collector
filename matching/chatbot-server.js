@@ -10,11 +10,12 @@
  *   GET  /api/chat/health              → santé du service
  */
 
-require('dotenv').config();
+const path     = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
+require('dotenv').config(); // fallback local cwd
 
 const express  = require('express');
 const cors     = require('cors');
-const path     = require('path');
 const fs       = require('fs');
 const os       = require('os');
 const multer   = require('multer');
@@ -33,6 +34,23 @@ const {
   getConversationHistory,
   loadUserProfile,
 } = require('./chatbot');
+
+// Configurations Bases de Données
+const DB_CONFIG = {
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT) || 3306,
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'gaynaako_opportunities',
+};
+
+const DB_PROFILS_CONFIG = {
+  host: process.env.DB_HOST || 'localhost',
+  port: parseInt(process.env.DB_PORT) || 3306,
+  user: process.env.DB_PROFILS_USER || process.env.DB_USER || 'root',
+  password: process.env.DB_PROFILS_PASSWORD !== undefined ? process.env.DB_PROFILS_PASSWORD : (process.env.DB_PASSWORD || ''),
+  database: process.env.DB_PROFILS_NAME || 'gaynaako_profils',
+};
 
 const app  = express();
 const PORT = process.env.CHATBOT_PORT || 3002;
@@ -189,29 +207,35 @@ app.get('/api/chat/sessions/:user_id', async (req, res) => {
  */
 app.get('/api/chat/health', async (req, res) => {
   const checks = {
-    server    : true,
-    groq_key  : !!process.env.GROQ_API_KEY,
-    database  : false,
+    server                : true,
+    groq_key              : !!process.env.GROQ_API_KEY,
+    database_opportunities: false,
+    database_profils      : false,
   };
 
   try {
     const mysql = require('mysql2/promise');
-    const conn  = await mysql.createConnection({
-      host    : process.env.DB_HOST     || 'localhost',
-      port    : parseInt(process.env.DB_PORT) || 3306,
-      user    : process.env.DB_USER     || 'root',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME     || 'gaynaako_opportunities',
-    });
-    await conn.query('SELECT 1');
-    await conn.end();
-    checks.database = true;
+    const connOpp = await mysql.createConnection(DB_CONFIG);
+    await connOpp.query('SELECT 1');
+    await connOpp.end();
+    checks.database_opportunities = true;
   } catch (err) {
-    checks.db_error = err.message;
+    checks.db_opportunities_error = err.message;
   }
 
-  const allOk     = Object.values(checks).every(v => v === true || typeof v === 'string');
-  const criticals = !checks.groq_key || !checks.database;
+  try {
+    const mysql = require('mysql2/promise');
+    const connProf = await mysql.createConnection(DB_PROFILS_CONFIG);
+    await connProf.query('SELECT 1');
+    await connProf.end();
+    checks.database_profils = true;
+  } catch (err) {
+    checks.db_profils_error = err.message;
+  }
+
+  checks.database = checks.database_opportunities && checks.database_profils;
+
+  const criticals = !checks.groq_key || !checks.database_opportunities;
 
   res.status(criticals ? 503 : 200).json({
     success  : !criticals,
@@ -298,13 +322,7 @@ app.post('/api/chat/login', async (req, res) => {
     }
 
     const mysql2 = require('mysql2/promise');
-    const conn   = await mysql2.createConnection({
-      host    : process.env.DB_HOST     || 'localhost',
-      port    : parseInt(process.env.DB_PORT) || 3306,
-      user    : process.env.DB_USER     || 'root',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME     || 'gaynaako_opportunities',
-    });
+    const conn   = await mysql2.createConnection(DB_PROFILS_CONFIG);
 
     // Chercher l'utilisateur existant
     const [users] = await conn.query(
@@ -349,6 +367,15 @@ app.post('/api/chat/login', async (req, res) => {
         `INSERT INTO utilisateurs (id, email, mot_de_passe, role, statut)
          VALUES (?, ?, ?, 'ENTREPRENEUR', 'ACTIF')`,
         [userId, cleanEmail, '$2b$10$placeholder_no_password_set']
+      );
+
+      // Création d'un profil entrepreneur minimal associé
+      const epId = uuidv4();
+      const defaultName = cleanEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+      await conn.query(
+        `INSERT INTO entrepreneur_profiles (id, nom_complet, domaine_expertise, utilisateur_id)
+         VALUES (?, ?, 'Entrepreneuriat / Général', ?)`,
+        [epId, defaultName, userId]
       );
 
       console.log(`[Login] Nouveau compte créé : ${cleanEmail} (${userId})`);
@@ -434,32 +461,31 @@ app.post('/api/chat/transcribe', upload.single('audio'), async (req, res) => {
 app.get('/api/chat/users/test', async (req, res) => {
   try {
     const mysql = require('mysql2/promise');
-    const conn  = await mysql.createConnection({
-      host    : process.env.DB_HOST     || 'localhost',
-      port    : parseInt(process.env.DB_PORT) || 3306,
-      user    : process.env.DB_USER     || 'root',
-      password: process.env.DB_PASSWORD || '',
-      database: process.env.DB_NAME     || 'gaynaako_opportunities',
-    });
+    const conn  = await mysql.createConnection(DB_PROFILS_CONFIG);
 
     const [rows] = await conn.query(`
       SELECT
         u.id, u.email, u.role,
         CASE u.role
-          WHEN 'ENTREPRENEUR'   THEN ep.domaine_expertise
-          WHEN 'PME'            THEN pp.nom_entreprise
-          WHEN 'ONG'            THEN op.nom_organisation
-          WHEN 'ADMINISTRATEUR' THEN ap.niveau_acces
+          WHEN 'ENTREPRENEUR' THEN ep.nom_complet
+          WHEN 'PME'          THEN pp.nom_entreprise
+          WHEN 'ONG'          THEN op.nom_organisation
+          ELSE u.email
+        END AS nom,
+        CASE u.role
+          WHEN 'ENTREPRENEUR' THEN ep.domaine_expertise
+          WHEN 'PME'          THEN pp.nom_entreprise
+          WHEN 'ONG'          THEN op.mission
+          ELSE ''
         END AS description,
         COALESCE(p.nom, '') AS pays
       FROM utilisateurs u
-      LEFT JOIN entrepreneur_profiles   ep ON ep.utilisateur_id = u.id
-      LEFT JOIN pme_profiles            pp ON pp.utilisateur_id = u.id
-      LEFT JOIN ong_profiles            op ON op.utilisateur_id = u.id
-      LEFT JOIN administrateur_profiles ap ON ap.utilisateur_id = u.id
-      LEFT JOIN pays p ON p.id = ep.pays_id
+      LEFT JOIN entrepreneur_profiles ep ON ep.utilisateur_id = u.id
+      LEFT JOIN pme_profiles          pp ON pp.utilisateur_id = u.id
+      LEFT JOIN ong_profiles          op ON op.utilisateur_id = u.id
+      LEFT JOIN pays                  p  ON p.id = ep.pays_id
       WHERE u.statut = 'ACTIF'
-      ORDER BY u.role
+      ORDER BY u.role, u.id
     `);
 
     await conn.end();
