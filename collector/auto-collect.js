@@ -4,6 +4,8 @@
  * Usage: node auto-collect.js
  */
 
+require('dotenv').config();
+
 const { collect } = require('./scraper');
 const { processData } = require('./data-cleaner');
 const { importToMySQL: importProcessedToMySQL } = require('./import-processed-to-mysql');

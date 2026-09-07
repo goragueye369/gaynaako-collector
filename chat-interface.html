@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Gaynaako — Assistant IA</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue      : #0084ff;
+      --blue-dark : #006fd6;
+      --bg        : #f0f2f5;
+      --white     : #ffffff;
+      --bubble-bot: #e4e6eb;
+      --text      : #050505;
+      --text-light: #65676b;
+      --header-bg : #0084ff;
+      --radius    : 18px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ══ WRAPPER MOBILE ══════════════════════════════════════ */
+    .app {
+      max-width: 480px;
+      margin: 0 auto;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--white);
+      box-shadow: 0 0 30px rgba(0,0,0,.12);
+      position: relative;
+    }
+
+    /* ══ HEADER ══════════════════════════════════════════════ */
+    .header {
+      background: var(--header-bg);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+      min-height: 58px;
+    }
+
+    .header-back {
+      color: var(--white);
+      font-size: 22px;
+      cursor: pointer;
+      line-height: 1;
+      flex-shrink: 0;
+      opacity: .9;
+    }
+
+    .header-avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: var(--white);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      border: 2px solid rgba(255,255,255,.4);
+    }
+
+    .header-info { flex: 1; min-width: 0; }
+    .header-info .name {
+      color: var(--white);
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .header-info .sub {
+      color: rgba(255,255,255,.85);
+      font-size: 11px;
+      margin-top: 1px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .header-actions {
+      display: flex; align-items: center; gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .btn-header {
+      color: var(--white);
+      background: rgba(255,255,255,.18);
+      border: none;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      letter-spacing: .03em;
+      transition: background .15s;
+    }
+    .btn-header:hover { background: rgba(255,255,255,.3); }
+
+    .btn-info {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: rgba(255,255,255,.18);
+      border: none;
+      color: var(--white);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Status dot dans le header */
+    .status-dot {
+      width: 9px; height: 9px;
+      border-radius: 50%;
+      background: #44d660;
+      border: 2px solid var(--header-bg);
+      position: absolute;
+      bottom: 0; right: 0;
+    }
+
+    /* ══ BANNIÈRE PROFIL ═════════════════════════════════════ */
+    #profileBanner {
+      display: none;
+      background: #e8f4ff;
+      border-bottom: 1px solid #cce0f5;
+      padding: 7px 14px;
+      font-size: 12px;
+      color: #0066cc;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+    #profileBanner.on { display: flex; }
+    #profileBanner strong { font-weight: 700; }
+    .pb-role {
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      background: #0084ff;
+      color: white;
+      text-transform: uppercase;
+    }
+    .pb-logout {
+      margin-left: auto;
+      background: none;
+      border: 1px solid #0084ff;
+      border-radius: 10px;
+      color: #0084ff;
+      font-size: 10px;
+      padding: 2px 8px;
+      cursor: pointer;
+    }
+
+    /* ══ MESSAGES ════════════════════════════════════════════ */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: var(--white);
+    }
+
+    /* Séparateur de date */
+    .date-sep {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-light);
+      margin: 8px 0;
+      position: relative;
+    }
+
+    /* Groupe de messages */
+    .msg-group {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 4px;
+    }
+    .msg-group.user  { align-items: flex-end; }
+    .msg-group.bot   { align-items: flex-start; }
+
+    /* Ligne avec avatar */
+    .msg-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+    }
+    .msg-group.user .msg-row { flex-direction: row-reverse; }
+
+    /* Avatar bot */
+    .bot-avatar {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--white);
+      border: 1.5px solid #ddd;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+      align-self: flex-end;
+    }
+    /* Avatar vide pour aligner les bulles suivantes */
+    .bot-avatar.ghost { visibility: hidden; }
+
+    /* Bulle */
+    .bubble {
+      max-width: 72vw;
+      padding: 9px 14px;
+      font-size: 14px;
+      line-height: 1.5;
+      word-break: break-word;
+    }
+
+    /* Bulle utilisateur — bleue */
+    .msg-group.user .bubble {
+      background: var(--blue);
+      color: var(--white);
+      border-radius: var(--radius) var(--radius) 4px var(--radius);
+    }
+    .msg-group.user .bubble a { color: rgba(255,255,255,.9); }
+
+    /* Première bulle user (arrondie différemment) */
+    .msg-group.user .bubble:first-child {
+      border-radius: var(--radius) var(--radius) 4px var(--radius);
+    }
+    .msg-group.user .bubble:last-child {
+      border-radius: var(--radius) 4px var(--radius) var(--radius);
+    }
+    .msg-group.user .bubble:only-child {
+      border-radius: var(--radius) var(--radius) 4px var(--radius);
+    }
+
+    /* Bulle bot — grise */
+    .msg-group.bot .bubble {
+      background: var(--bubble-bot);
+      color: var(--text);
+      border-radius: var(--radius) var(--radius) var(--radius) 4px;
+    }
+    .msg-group.bot .bubble:last-child {
+      border-radius: 4px var(--radius) var(--radius) var(--radius);
+    }
+    .msg-group.bot .bubble:only-child {
+      border-radius: 4px var(--radius) var(--radius) var(--radius);
+    }
+
+    /* Markdown dans les bulles */
+    .bubble strong { font-weight: 700; }
+    .bubble em     { font-style: italic; }
+    .bubble a      { text-decoration: underline; }
+    .bubble ul, .bubble ol { padding-left: 16px; margin: 4px 0; }
+    .bubble li     { margin-bottom: 2px; }
+    .bubble h3     { font-size: 14px; font-weight: 700; margin: 6px 0 2px; }
+    .bubble code   { background: rgba(0,0,0,.08); padding: 1px 4px; border-radius: 3px; font-size: 12px; font-family: monospace; }
+    .bubble hr     { border: none; border-top: 1px solid rgba(0,0,0,.1); margin: 6px 0; }
+
+    /* Bouton partage/action sur bulle bot */
+    .bubble-share {
+      background: none; border: none;
+      color: var(--text-light);
+      font-size: 14px;
+      cursor: pointer; padding: 2px 4px;
+      align-self: flex-end;
+      margin-bottom: 2px;
+    }
+
+    /* Suggestions de réponses rapides */
+    .quick-replies {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      padding: 4px 0 4px 36px;
+    }
+    .qr-btn {
+      background: var(--white);
+      border: 1.5px solid var(--blue);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: var(--blue);
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap;
+    }
+    .qr-btn:hover {
+      background: var(--blue);
+      color: var(--white);
+    }
+
+    /* Bouton écouter (discret, sous bulle bot) */
+    .listen-btn.speaking { color: var(--blue); }
+
+    /* Meta */
+    .msg-meta {
+      font-size: 10px; color: var(--text-light);
+      padding: 0 4px 0 36px;
+      margin-top: 1px;
+    }
+
+    /* Typing indicator */
+    .typing-row {
+      display: flex; align-items: flex-end; gap: 6px;
+    }
+    .typing-bubble {
+      background: var(--bubble-bot);
+      border-radius: 4px var(--radius) var(--radius) var(--radius);
+      padding: 12px 16px;
+      display: flex; gap: 4px; align-items: center;
+    }
+    .td { width: 7px; height: 7px; background: #aaa; border-radius: 50%; animation: bop 1.2s infinite; }
+    .td:nth-child(2){ animation-delay:.2s }
+    .td:nth-child(3){ animation-delay:.4s }
+    @keyframes bop { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-5px)} }
+
+    /* Message système */
+    .sys-msg {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-light);
+      background: #fff3cd;
+      border-radius: 12px;
+      padding: 6px 12px;
+      margin: 4px auto;
+      max-width: 80%;
+    }
+
+    /* ══ MODAL LOGIN ════════════════════════════════════════= */
+    .overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.5);
+      z-index: 200;
+      align-items: flex-end;
+      justify-content: center;
+    }
+    .overlay.open { display: flex; }
+
+    .modal {
+      background: var(--white);
+      border-radius: 20px 20px 0 0;
+      padding: 24px 20px 32px;
+      width: 100%; max-width: 480px;
+      animation: slideUp .25s ease;
+    }
+    @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+
+    .modal-handle {
+      width: 36px; height: 4px;
+      background: #ddd; border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+
+    .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .modal p  { font-size: 13px; color: var(--text-light); margin-bottom: 20px; }
+
+    .modal label { display: block; font-size: 12px; font-weight: 600; margin-bottom: 5px; }
+    .modal input[type=email] {
+      width: 100%;
+      padding: 13px 16px;
+      border: 1.5px solid #ddd;
+      border-radius: 12px;
+      font-size: 15px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .15s;
+      margin-bottom: 10px;
+    }
+    .modal input[type=email]:focus { border-color: var(--blue); }
+
+    .modal-err {
+      font-size: 12px; color: #e53e3e;
+      background: #fff5f5;
+      border-radius: 8px;
+      padding: 8px 12px;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .modal-err.on { display: block; }
+
+    .btn-submit {
+      width: 100%;
+      padding: 14px;
+      background: var(--blue);
+      color: var(--white);
+      border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: background .15s;
+      margin-bottom: 14px;
+    }
+    .btn-submit:hover:not(:disabled) { background: var(--blue-dark); }
+    .btn-submit:disabled { background: #aac8f0; cursor: wait; }
+
+    .modal-cancel {
+      display: block; text-align: center;
+      font-size: 14px; color: var(--text-light);
+      cursor: pointer; margin-bottom: 16px;
+    }
+
+    .modal-divider {
+      text-align: center; font-size: 11px;
+      color: var(--text-light); margin-bottom: 12px;
+      position: relative;
+    }
+    .modal-divider::before, .modal-divider::after {
+      content: ''; position: absolute; top: 50%;
+      width: 40%; height: 1px; background: #eee;
+    }
+    .modal-divider::before { left: 0; }
+    .modal-divider::after  { right: 0; }
+
+    .quick-accounts {
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .acc-btn {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px;
+      border: 1.5px solid #eee; border-radius: 12px;
+      background: var(--white);
+      cursor: pointer; font-size: 13px;
+      color: var(--text); font-weight: 500;
+      transition: background .12s;
+    }
+    .acc-btn:hover { background: #f5f5f5; }
+    .acc-icon { font-size: 20px; }
+    .acc-info { flex: 1; text-align: left; }
+    .acc-role { font-size: 10px; color: var(--text-light); text-transform: uppercase; letter-spacing: .04em; }
+    .acc-email { font-size: 12px; color: var(--blue); }
+
+    /* ══ INPUT BAR ═══════════════════════════════════════════ */
+    .input-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      background: var(--white);
+      border-top: 1px solid #e4e6eb;
+      flex-shrink: 0;
+    }
+
+    .btn-menu {
+      width: 38px; height: 38px;
+      background: none; border: none;
+      color: var(--blue);
+      font-size: 22px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .input-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      background: #f0f2f5;
+      border-radius: 22px;
+      padding: 0 12px;
+      gap: 6px;
+      min-height: 38px;
+    }
+
+    #userInput {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--text);
+      resize: none;
+      max-height: 100px;
+      line-height: 1.4;
+      padding: 8px 0;
+    }
+    #userInput::placeholder { color: #bec3c9; }
+
+    /* Bouton micro dans le champ */
+    #micBtn {
+      background: none; border: none;
+      color: var(--blue); font-size: 18px;
+      cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: color .15s;
+    }
+    #micBtn.rec { color: #e53e3e; animation: pulse 1s infinite; }
+    #micBtn:disabled { color: #aaa; cursor: wait; }
+
+    @keyframes pulse {
+      0%,100%{ transform: scale(1); }
+      50%    { transform: scale(1.15); }
+    }
+
+    /* Bouton envoyer (bulle bleue) */
+    #sendBtn {
+      width: 38px; height: 38px;
+      background: var(--blue);
+      color: var(--white);
+      border: none; border-radius: 50%;
+      font-size: 17px;
+      cursor: pointer; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .15s, transform .1s;
+    }
+    #sendBtn:hover:not(:disabled) { background: var(--blue-dark); transform: scale(1.05); }
+    #sendBtn:disabled { background: #aac8f0; cursor: not-allowed; }
+
+    /* Bande écoute vocale */
+    #listenBar {
+      display: none;
+      align-items: center; gap: 8px;
+      padding: 5px 14px;
+      background: #e8f4ff;
+      font-size: 12px; color: var(--blue);
+      flex-shrink: 0;
+    }
+    #listenBar.on { display: flex; }
+    .lbar-dots span {
+      display: inline-block; width: 5px; height: 5px;
+      background: var(--blue); border-radius: 50%;
+      animation: bop 1s infinite; margin: 0 2px;
+    }
+    .lbar-dots span:nth-child(2){ animation-delay:.2s }
+    .lbar-dots span:nth-child(3){ animation-delay:.4s }
+    .lbar-cancel {
+      margin-left: auto; background: none; border: none;
+      color: var(--text-light); cursor: pointer; font-size: 13px;
+    }
+
+    /* Scroll */
+    #messages::-webkit-scrollbar { width: 3px; }
+    #messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 10px; }
+
+    @media (min-width: 481px) {
+      .app { border-radius: 0; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ══ HEADER ═══════════════════════════════════════════ -->
+  <div class="header">
+    <span class="header-back">←</span>
+    <div style="position:relative; flex-shrink:0;">
+      <div class="header-avatar">🌾</div>
+      <div class="status-dot"></div>
+    </div>
+    <div class="header-info">
+      <div class="name">Gaynaako Assistant IA</div>
+      <div class="sub" id="headerSub">Répond en quelques secondes…</div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-header" id="loginBtn" onclick="openModal()">CONNEXION</button>
+      <button class="btn-info" onclick="showInfo()">ⓘ</button>
+    </div>
+  </div>
+
+  <!-- ══ BANNIÈRE PROFIL ═══════════════════════════════════ -->
+  <div id="profileBanner">
+    <span class="pb-role" id="pbRole"></span>
+    <span id="pbText"></span>
+    <button class="pb-logout" onclick="logout()">Déconnecter</button>
+  </div>
+
+  <!-- ══ MESSAGES ══════════════════════════════════════════ -->
+  <div id="messages">
+    <div class="date-sep">Aujourd'hui</div>
+
+    <!-- Message de bienvenue bot -->
+    <div class="msg-group bot" id="welcomeGroup">
+      <div class="msg-row">
+        <div class="bot-avatar">🌾</div>
+        <div class="bubble">
+          <strong>Bonjour ! Je suis Gaynaako 🌾</strong><br><br>
+          Votre assistant pour les <strong>opportunités professionnelles</strong> et <strong>financements</strong> en Afrique de l'Ouest.<br><br>
+          Posez-moi vos questions — je réponds immédiatement !<br>
+          Connectez-vous pour des recommandations personnalisées.
+        </div>
+      </div>
+    </div>
+
+    <!-- Suggestions initiales -->
+    <div class="quick-replies" id="initSugs">
+      <button class="qr-btn" onclick="sendQ('Quelles opportunités au Sénégal ?')">Opportunités Sénégal</button>
+      <button class="qr-btn" onclick="sendQ('Financement PME disponible')">Financement PME</button>
+      <button class="qr-btn" onclick="openModal()">👤 Se connecter</button>
+    </div>
+  </div>
+
+  <!-- ══ BANDE ÉCOUTE ═══════════════════════════════════════ -->
+  <div id="listenBar">
+    <div class="lbar-dots"><span></span><span></span><span></span></div>
+    <span id="listenTxt">Enregistrement… parlez</span>
+    <button class="lbar-cancel" onclick="stopRec()">✕ Annuler</button>
+  </div>
+
+  <!-- ══ INPUT BAR ══════════════════════════════════════════ -->
+  <div class="input-bar">
+    <button class="btn-menu" onclick="toggleMenu()">☰</button>
+    <div class="input-wrap">
+      <textarea
+        id="userInput" rows="1"
+        placeholder="Écrire un message…"
+        onkeydown="onKey(event)"
+        oninput="autoH(this)"
+      ></textarea>
+      <button id="micBtn" onclick="toggleRec()" title="Message vocal">🎤</button>
+    </div>
+    <button id="sendBtn" onclick="send()">➤</button>
+  </div>
+
+</div><!-- /.app -->
+
+<!-- ══ MODAL LOGIN ════════════════════════════════════════ -->
+<div class="overlay" id="loginOverlay" onclick="closeIfBg(event)">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <h2>Se connecter</h2>
+    <p>Entrez votre email — Gaynaako vous reconnaîtra et personnalisera ses réponses.</p>
+
+    <label>Adresse email</label>
+    <input type="email" id="emailInput" placeholder="votre@email.com"
+      onkeydown="if(event.key==='Enter') doLogin()" />
+
+    <div class="modal-err" id="loginErr"></div>
+
+    <button class="btn-submit" id="submitBtn" onclick="doLogin()">Se connecter</button>
+    <span class="modal-cancel" onclick="closeModal()">Annuler</span>
+
+    <div class="modal-divider">Comptes de test</div>
+
+    <div class="quick-accounts">
+      <button class="acc-btn" onclick="quick('amadou.diallo@gmail.com')">
+        <span class="acc-icon">👨‍💼</span>
+        <div class="acc-info">
+          <div>Amadou Diallo</div>
+          <div class="acc-role">Entrepreneur · Tech / IA</div>
+          <div class="acc-email">amadou.diallo@gmail.com</div>
+        </div>
+        <span style="color:#bbb">›</span>
+      </button>
+      <button class="acc-btn" onclick="quick('fatou.kone@agriplus.ci')">
+        <span class="acc-icon">🏢</span>
+        <div class="acc-info">
+          <div>Fatou Koné</div>
+          <div class="acc-role">PME · Agriculture</div>
+          <div class="acc-email">fatou.kone@agriplus.ci</div>
+        </div>
+        <span style="color:#bbb">›</span>
+      </button>
+      <button class="acc-btn" onclick="quick('mariama.traore@espoir-mali.org')">
+        <span class="acc-icon">🤝</span>
+        <div class="acc-info">
+          <div>Mariama Traoré</div>
+          <div class="acc-role">ONG · Éducation & Eau</div>
+          <div class="acc-email">mariama.traore@espoir-mali.org</div>
+        </div>
+        <span style="color:#bbb">›</span>
+      </button>
+      <button class="acc-btn" onclick="quick('admin@gaynaako.sn')">
+        <span class="acc-icon">⚙️</span>
+        <div class="acc-info">
+          <div>Administrateur</div>
+          <div class="acc-role">Super Admin</div>
+          <div class="acc-email">admin@gaynaako.sn</div>
+        </div>
+        <span style="color:#bbb">›</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MENU LATÉRAL (exemples) ════════════════════════════ -->
+<div class="overlay" id="menuOverlay" onclick="closeIfBg(event)" style="align-items:flex-start">
+  <div class="modal" style="border-radius:0 20px 20px 0; max-width:280px; height:100vh; overflow-y:auto; padding:30px 16px;">
+    <div style="font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+      🌾 Gaynaako
+    </div>
+    <div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Questions fréquentes</div>
+
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <button class="acc-btn" onclick="sendEx('Quelles opportunités au Sénégal ?')">Opportunités au Sénégal</button>
+      <button class="acc-btn" onclick="sendEx('Appels d offres BAD Banque Mondiale')">Appels d'offres BAD / BM</button>
+      <button class="acc-btn" onclick="sendEx('Financement pour startup tech')">Financement startups tech</button>
+      <button class="acc-btn" onclick="sendEx('Opportunités agriculture Afrique Ouest')">Agriculture Afrique Ouest</button>
+      <button class="acc-btn" onclick="sendEx('Comment postuler à un projet PNUD')">Postuler PNUD</button>
+      <button class="acc-btn" onclick="sendEx('Combien opportunités disponibles')">Stats & chiffres clés</button>
+      <button class="acc-btn" onclick="sendEx('Formations recommandées')">Formations conseillées</button>
+    </div>
+
+    <div style="margin-top:20px;border-top:1px solid #eee;padding-top:16px;">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer;">
+        <input type="checkbox" id="ttsToggle" style="accent-color:#0084ff">
+        🔊 Lecture vocale auto
+      </label>
+    </div>
+
+    <div style="margin-top:auto;padding-top:20px;">
+      <button onclick="newChat();closeMenu()" style="width:100%;padding:10px;border:1.5px solid #0084ff;border-radius:12px;background:none;color:#0084ff;font-weight:700;font-size:13px;cursor:pointer;">
+        + Nouvelle conversation
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ CONFIG ══════════════════════════════════════════════════
+const BASE    = 'http://localhost:3002';
+const CHAT    = BASE + '/api/chat';
+const LOGIN   = BASE + '/api/chat/login';
+const TSCRIBE = BASE + '/api/chat/transcribe';
+
+let user      = null;
+let sessionId = null;
+let sending   = false;
+let msgId     = 0;
+
+// ══ INIT ════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded', () => {
+  initMic();
+  initTTS();
+});
+
+// ══════════════════════════════════════════════════════════
+// 👤 LOGIN / LOGOUT
+// ══════════════════════════════════════════════════════════
+function openModal() {
+  closeMenu();
+  document.getElementById('emailInput').value = '';
+  document.getElementById('loginErr').classList.remove('on');
+  document.getElementById('loginOverlay').classList.add('open');
+  setTimeout(() => document.getElementById('emailInput').focus(), 200);
+}
+function closeModal() { document.getElementById('loginOverlay').classList.remove('open'); }
+
+function closeIfBg(e) {
+  if (e.target.id === 'loginOverlay') closeModal();
+  if (e.target.id === 'menuOverlay')  closeMenu();
+}
+
+function quick(email) {
+  document.getElementById('emailInput').value = email;
+  doLogin();
+}
+
+async function doLogin() {
+  const email = document.getElementById('emailInput').value.trim().toLowerCase();
+  const err   = document.getElementById('loginErr');
+  const btn   = document.getElementById('submitBtn');
+
+  if (!email) { err.textContent = 'Veuillez saisir votre email.'; err.classList.add('on'); return; }
+
+  btn.disabled = true; btn.textContent = 'Connexion en cours…';
+  err.classList.remove('on');
+
+  try {
+    const r = await fetch(LOGIN, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ email })
+    });
+    const d = await r.json();
+
+    if (!d.success) {
+      err.textContent = d.error || 'Email non reconnu.';
+      err.classList.add('on');
+      return;
+    }
+
+    user      = d.user;
+    sessionId = null;
+    closeModal();
+    applyUserUI();
+    greetUser(d.is_new);
+
+  } catch {
+    err.textContent = 'Impossible de contacter le serveur.';
+    err.classList.add('on');
+  } finally {
+    btn.disabled = false; btn.textContent = 'Se connecter';
+  }
+}
+
+function logout() {
+  if (!confirm('Se déconnecter ?')) return;
+  user = null; sessionId = null;
+  applyUserUI();
+  newChat();
+  addBotMsg('Vous êtes déconnecté(e) 👋\nPosez vos questions librement, ou reconnectez-vous pour des recommandations personnalisées.', ['👤 Se connecter']);
+}
+
+function applyUserUI() {
+  const banner = document.getElementById('profileBanner');
+  const loginB = document.getElementById('loginBtn');
+  const sub    = document.getElementById('headerSub');
+
+  if (!user) {
+    banner.classList.remove('on');
+    loginB.textContent  = 'CONNEXION';
+    loginB.onclick      = openModal;
+    sub.textContent     = 'Répond en quelques secondes…';
+    return;
+  }
+
+  banner.classList.add('on');
+  document.getElementById('pbRole').textContent = user.role;
+  let detail = user.email.split('@')[0];
+  if (user.secteur)           detail += ' · ' + user.secteur;
+  else if (user.secteurs)     detail += ' · ' + user.secteurs;
+  else if (user.nom_entreprise) detail += ' · ' + user.nom_entreprise;
+  else if (user.nom_organisation) detail += ' · ' + user.nom_organisation;
+  if (user.pays) detail += ' 📍' + user.pays;
+  document.getElementById('pbText').textContent = detail;
+
+  loginB.textContent  = user.email.split('@')[0].toUpperCase();
+  loginB.style.background = 'rgba(255,255,255,.3)';
+  loginB.onclick = logout;
+  sub.textContent = 'Connecté · ' + user.role.toLowerCase();
+}
+
+function greetUser(isNew = false) {
+  if (!user) return;
+  const name = user.email.split('@')[0];
+  let ctx = '';
+  if (user.secteur)               ctx = `secteur **${user.secteur}**`;
+  else if (user.secteurs)         ctx = `secteurs **${user.secteurs}**`;
+  else if (user.nom_entreprise)   ctx = `entreprise **${user.nom_entreprise}**`;
+  else if (user.nom_organisation) ctx = `organisation **${user.nom_organisation}**`;
+
+  let msg;
+  if (isNew) {
+    msg = `Bienvenue **${name}** ! 🎉\n\nVotre compte a été créé automatiquement avec votre email.\n\nVous avez un profil **ENTREPRENEUR** de base. Je peux déjà vous trouver des opportunités adaptées !\n\nPar la suite votre profil pourra être enrichi (secteur, pays, objectifs).`;
+  } else {
+    msg = `Bienvenue **${name}** ! 👋\n\nJe vous reconnais — **${user.role}**${ctx ? ` · ${ctx}` : ''}${user.pays ? ` · 📍 ${user.pays}` : ''}.\n\nToutes mes réponses seront adaptées à votre profil. Que souhaitez-vous explorer ?`;
+  }
+
+  addBotMsg(msg, [
+    'Opportunités pour mon profil',
+    'Opportunités urgentes',
+    'Analyser mon éligibilité'
+  ]);
+}
+
+// ══════════════════════════════════════════════════════════
+// 💬 ENVOI MESSAGE
+// ══════════════════════════════════════════════════════════
+async function send() {
+  const inp  = document.getElementById('userInput');
+  const text = inp.value.trim();
+  if (!text || sending) return;
+
+  sending = true;
+  document.getElementById('sendBtn').disabled = true;
+
+  // Cacher suggestions initiales
+  const is = document.getElementById('initSugs');
+  if (is) is.remove();
+
+  addUserMsg(text);
+  inp.value = ''; inp.style.height = 'auto';
+
+  const tid = addTyping();
+
+  try {
+    const body = { message: text, user_id: user ? user.id : 'anonymous' };
+    if (sessionId) body.session_id = sessionId;
+
+    const r = await fetch(CHAT, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+
+    if (d.session_id) sessionId = d.session_id;
+    removeTyping(tid);
+
+    if (d.success) {
+      const id = addBotMsg(d.message, d.suggestions, d.meta);
+      if (ttsAuto) speakText(d.message, 'spk-'+id);
+    } else {
+      addSysMsg('⚠️ ' + (d.error || 'Erreur inconnue'));
+    }
+  } catch {
+    removeTyping(tid);
+    addSysMsg('❌ Serveur inaccessible (port 3002)');
+  }
+
+  sending = false;
+  document.getElementById('sendBtn').disabled = false;
+  inp.focus();
+}
+
+function sendQ(txt) {
+  const is = document.getElementById('initSugs');
+  if (is) is.remove();
+  document.getElementById('userInput').value = txt;
+  send();
+}
+function sendEx(txt) { closeMenu(); sendQ(txt); }
+
+function newChat() {
+  sessionId = null; stopSpeak();
+  const m = document.getElementById('messages');
+  while (m.children.length > 1) m.removeChild(m.lastChild);
+}
+
+// ══════════════════════════════════════════════════════════
+// 🖼 RENDU MESSAGES
+// ══════════════════════════════════════════════════════════
+function addUserMsg(text) {
+  const m   = document.getElementById('messages');
+  const grp = document.createElement('div');
+  grp.className = 'msg-group user';
+  grp.innerHTML = `
+    <div class="msg-row">
+      <div class="bubble">${esc(text)}</div>
+    </div>`;
+  m.appendChild(grp);
+  scrollEnd();
+}
+
+function addBotMsg(text, sugs = [], meta = {}) {
+  const m   = document.getElementById('messages');
+  const id  = ++msgId;
+
+  // Diviser le texte en paragraphes pour effet multi-bulles
+  const parts = splitIntoParts(text);
+
+  const grp = document.createElement('div');
+  grp.className = 'msg-group bot';
+
+  // Bulles
+  parts.forEach((part, i) => {
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    const isLast = i === parts.length - 1;
+    row.innerHTML = `
+      <div class="bot-avatar ${isLast ? '' : 'ghost'}">🌾</div>
+      <div class="bubble">${md(part)}</div>
+      ${isLast ? `<button class="bubble-share" onclick="copyMsg(${JSON.stringify(text)})" title="Copier">⬆</button>` : ''}`;
+    grp.appendChild(row);
+  });
+
+  // Meta (si disponible)
+  if (meta && meta.duration_ms) {
+    const metaDiv = document.createElement('div');
+    metaDiv.className   = 'msg-meta';
+    metaDiv.textContent = `${meta.opportunities_used || 0} opps · ${meta.duration_ms}ms`;
+    grp.appendChild(metaDiv);
+  }
+
+  m.appendChild(grp);
+
+  // Quick replies
+  if (sugs && sugs.length) {
+    const qr = document.createElement('div');
+    qr.className = 'quick-replies';
+    sugs.forEach(s => {
+      const b = document.createElement('button');
+      b.className = 'qr-btn';
+      if (s === '👤 Se connecter' || s === 'Me connecter') {
+        b.textContent = '👤 Se connecter';
+        b.onclick = openModal;
+      } else {
+        b.textContent = s;
+        b.onclick = () => sendQ(s);
+      }
+      qr.appendChild(b);
+    });
+    m.appendChild(qr);
+  }
+
+  scrollEnd();
+  return id;
+}
+
+function addTyping() {
+  const m   = document.getElementById('messages');
+  const div = document.createElement('div');
+  const id  = 'typ-' + Date.now();
+  div.id = id;
+  div.className = 'typing-row';
+  div.innerHTML = `
+    <div class="bot-avatar">🌾</div>
+    <div class="typing-bubble">
+      <div class="td"></div><div class="td"></div><div class="td"></div>
+    </div>`;
+  m.appendChild(div);
+  scrollEnd();
+  return id;
+}
+
+function removeTyping(id) { const e = document.getElementById(id); if(e) e.remove(); }
+
+function addSysMsg(txt) {
+  const m   = document.getElementById('messages');
+  const div = document.createElement('div');
+  div.className = 'sys-msg';
+  div.textContent = txt;
+  m.appendChild(div);
+  scrollEnd();
+}
+
+function scrollEnd() {
+  const m = document.getElementById('messages');
+  m.scrollTop = m.scrollHeight;
+}
+
+// Divise le texte long en 2-3 parties (effet multi-bulles naturel)
+function splitIntoParts(text) {
+  const lines = text.split('\n').filter(l => l.trim());
+  if (lines.length <= 2 || text.length < 200) return [text];
+  // Première bulle : intro (1-2 lignes)
+  const first = lines.slice(0, 2).join('\n');
+  const rest  = lines.slice(2).join('\n');
+  if (rest.length < 50) return [text];
+  return [first, rest];
+}
+
+function copyMsg(text) {
+  navigator.clipboard?.writeText(text).catch(()=>{});
+}
+
+// ══════════════════════════════════════════════════════════
+// 🎤 VOCAL
+// ══════════════════════════════════════════════════════════
+let recorder=null, chunks=[], recording=false, mstream=null;
+
+function initMic() {
+  const btn = document.getElementById('micBtn');
+  if (!window.MediaRecorder || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    btn.disabled = true;
+    btn.title = 'Micro non supporté';
+    btn.style.opacity = '0.4';
+  }
+}
+
+async function toggleRec() {
+  if (recording) { stopRec(); } else { await startRec(); }
+}
+
+async function startRec() {
+  // Sécurité : getUserMedia exige localhost ou https
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    addSysMsg('⚠️ Le micro nécessite une connexion sécurisée (https) ou localhost.');
+    return;
+  }
+
+  try {
+    mstream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+  } catch(e) {
+    if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+      addSysMsg('⚠️ Accès micro refusé. Autorisez le microphone dans votre navigateur (icône 🔒).');
+    } else if (e.name === 'NotFoundError') {
+      addSysMsg('⚠️ Aucun microphone détecté.');
+    } else {
+      addSysMsg('⚠️ Micro inaccessible : ' + e.message);
+    }
+    return;
+  }
+
+  // Trouver le meilleur format supporté
+  const mimeTypes = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg','audio/mp4'];
+  const mime = mimeTypes.find(t => { try { return MediaRecorder.isTypeSupported(t); } catch { return false; } }) || '';
+
+  try {
+    chunks = [];
+    recorder = mime
+      ? new MediaRecorder(mstream, { mimeType: mime, audioBitsPerSecond: 128000 })
+      : new MediaRecorder(mstream);
+  } catch(e) {
+    if (mstream) { mstream.getTracks().forEach(t => t.stop()); mstream = null; }
+    addSysMsg('⚠️ Impossible de créer l\'enregistreur : ' + e.message);
+    return;
+  }
+
+  recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
+  recorder.onstop = async () => {
+    if (mstream) { mstream.getTracks().forEach(t => t.stop()); mstream = null; }
+    if (!chunks.length) { addSysMsg('⚠️ Aucun audio capturé.'); resetMicBtn(); return; }
+    const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+    chunks = [];
+    if (blob.size < 1000) { addSysMsg('⚠️ Audio trop court. Parlez plus longtemps.'); resetMicBtn(); return; }
+    await transcribe(blob);
+  };
+
+  recorder.onerror = (e) => {
+    addSysMsg('⚠️ Erreur enregistrement : ' + (e.error?.message || 'inconnue'));
+    resetMicBtn();
+  };
+
+  recorder.start(250);
+  recording = true;
+
+  const btn = document.getElementById('micBtn');
+  btn.classList.add('rec'); btn.textContent = '⏹'; btn.title = 'Arrêter et envoyer';
+  document.getElementById('listenBar').classList.add('on');
+  document.getElementById('listenTxt').textContent = 'Enregistrement… parlez maintenant';
+  document.getElementById('userInput').value = '';
+}
+
+function stopRec() {
+  if (!recorder) return;
+  try {
+    if (recorder.state === 'recording' || recorder.state === 'paused') recorder.stop();
+  } catch(e) { resetMicBtn(); return; }
+  recording = false;
+  const btn = document.getElementById('micBtn');
+  btn.classList.remove('rec'); btn.textContent = '⏳'; btn.disabled = true; btn.title = 'Transcription…';
+  document.getElementById('listenTxt').textContent = 'Transcription en cours…';
+}
+
+function resetMicBtn() {
+  recording = false;
+  const btn = document.getElementById('micBtn');
+  btn.classList.remove('rec'); btn.textContent = '🎤'; btn.disabled = false; btn.title = 'Message vocal';
+  document.getElementById('listenBar').classList.remove('on');
+  document.getElementById('listenTxt').textContent = 'Enregistrement… parlez maintenant';
+  if (mstream) { mstream.getTracks().forEach(t => t.stop()); mstream = null; }
+}
+
+async function transcribe(blob) {
+  try {
+    const ext = blob.type.includes('ogg') ? 'ogg' : blob.type.includes('mp4') ? 'mp4' : 'webm';
+    const fd = new FormData();
+    fd.append('audio', blob, `voice.${ext}`);
+    const r = await fetch(TSCRIBE, { method: 'POST', body: fd });
+    if (!r.ok) { const err = await r.json().catch(()=>({})); addSysMsg('⚠️ Serveur : ' + (err.error || r.statusText)); return; }
+    const d = await r.json();
+    if (d.success && d.text && d.text.trim().length > 0) {
+      document.getElementById('userInput').value = d.text.trim();
+      autoH(document.getElementById('userInput'));
+      setTimeout(() => send(), 100);
+    } else {
+      addSysMsg('⚠️ Transcription vide. Parlez plus distinctement et réessayez.');
+    }
+  } catch(e) {
+    addSysMsg('❌ Erreur transcription : ' + e.message);
+  } finally {
+    resetMicBtn();
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+// 🔊 TTS
+// ══════════════════════════════════════════════════════════
+let ttsAuto=false, curUtt=null, spkId=null;
+
+function initTTS() {
+  const tog=document.getElementById('ttsToggle');
+  if(!window.speechSynthesis){tog.disabled=true;return;}
+  tog.addEventListener('change',()=>{ttsAuto=tog.checked;if(!ttsAuto)stopSpeak();});
+}
+
+function speakText(text,btnId) {
+  if(!window.speechSynthesis) return;
+  if(spkId===btnId&&window.speechSynthesis.speaking){stopSpeak();return;}
+  stopSpeak();
+  const clean=text.replace(/[#*_`>\[\]]/g,'').replace(/https?:\/\/\S+/g,'').replace(/\n+/g,' ').trim().substring(0,900);
+  curUtt=new SpeechSynthesisUtterance(clean);
+  curUtt.lang='fr-FR'; curUtt.rate=1.0;
+  const v=window.speechSynthesis.getVoices().find(v=>v.lang.startsWith('fr'));
+  if(v) curUtt.voice=v;
+  spkId=btnId;
+  const b=document.getElementById(btnId);
+  if(b){b.textContent='⏹ Stop';b.classList.add('speaking');}
+  curUtt.onend=curUtt.onerror=()=>{
+    if(b){b.textContent='🔊 Écouter';b.classList.remove('speaking');}
+    spkId=null;
+  };
+  window.speechSynthesis.speak(curUtt);
+}
+
+function stopSpeak() {
+  if(window.speechSynthesis) window.speechSynthesis.cancel();
+  if(spkId){const b=document.getElementById(spkId);if(b){b.textContent='🔊 Écouter';b.classList.remove('speaking');}}
+  spkId=null; curUtt=null;
+}
+
+// ══════════════════════════════════════════════════════════
+// ☰ MENU
+// ══════════════════════════════════════════════════════════
+function toggleMenu() {
+  const o=document.getElementById('menuOverlay');
+  o.classList.contains('open')?closeMenu():o.classList.add('open');
+}
+function closeMenu() { document.getElementById('menuOverlay').classList.remove('open'); }
+
+function showInfo() {
+  addBotMsg(
+    '**Gaynaako** est alimenté par :\n- 🤖 Groq · Qwen 3.8-27B\n- 🗄 Base MySQL · opportunités Afrique de l\'Ouest\n- 🎤 Whisper (transcription vocale)\n\nCollecte automatique toutes les 6 heures.',
+    [], {}
+  );
+}
+
+// ══════════════════════════════════════════════════════════
+// 🛠 UTILITAIRES
+// ══════════════════════════════════════════════════════════
+function md(t) {
+  return t
+    .replace(/^### (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^## (.+)$/gm,'<h3>$1</h3>')
+    .replace(/^# (.+)$/gm,'<h3>$1</h3>')
+    .replace(/\*\*\*(.+?)\*\*\*/g,'<strong><em>$1</em></strong>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/\[(.+?)\]\((.+?)\)/g,'<a href="$2" target="_blank">$1</a>')
+    .replace(/^[\*\-] (.+)$/gm,'<li>$1</li>')
+    .replace(/(<li>[\s\S]*?<\/li>\n?)+/g,'<ul>$&</ul>')
+    .replace(/`(.+?)`/g,'<code>$1</code>')
+    .replace(/^---$/gm,'<hr>')
+    .replace(/\n{2,}/g,'<br><br>')
+    .replace(/\n/g,'<br>');
+}
+function esc(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function onKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}}
+function autoH(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,100)+'px';}
+</script>
+</body>
+</html>
