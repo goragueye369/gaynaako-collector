@@ -280,13 +280,21 @@ app.get('/api/chat/examples', (_req, res) => {
 /**
  * POST /api/chat/login
  * Corps : { email }
- * Identifie l'utilisateur par son email et retourne son profil
+ * - Si l'email existe en DB → retourne le profil complet
+ * - Si l'email n'existe pas → crée un compte VISITEUR et retourne le profil
  */
 app.post('/api/chat/login', async (req, res) => {
   try {
     const { email } = req.body;
     if (!email || typeof email !== 'string') {
       return res.status(400).json({ success: false, error: 'Email requis.' });
+    }
+
+    const cleanEmail = email.trim().toLowerCase();
+
+    // Validation format email simple
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      return res.status(400).json({ success: false, error: 'Format email invalide.' });
     }
 
     const mysql2 = require('mysql2/promise');
@@ -298,23 +306,67 @@ app.post('/api/chat/login', async (req, res) => {
       database: process.env.DB_NAME     || 'gaynaako_opportunities',
     });
 
+    // Chercher l'utilisateur existant
     const [users] = await conn.query(
-      `SELECT id, email, role, statut FROM utilisateurs WHERE email = ? AND statut = 'ACTIF'`,
-      [email.trim().toLowerCase()]
+      `SELECT id, email, role, statut FROM utilisateurs WHERE email = ?`,
+      [cleanEmail]
     );
-    await conn.end();
 
-    if (!users.length) {
-      return res.status(404).json({
-        success: false,
-        error  : 'Aucun compte trouvé avec cet email. Vérifiez votre adresse ou créez un compte.'
-      });
+    let userId;
+    let isNew = false;
+
+    if (users.length > 0) {
+      // Utilisateur existant
+      const existingUser = users[0];
+
+      // Vérifier si le compte est suspendu
+      if (existingUser.statut === 'SUSPENDU') {
+        await conn.end();
+        return res.status(403).json({
+          success: false,
+          error  : 'Ce compte est suspendu. Contactez l\'administrateur.'
+        });
+      }
+
+      // Réactiver si EN_ATTENTE
+      if (existingUser.statut === 'EN_ATTENTE') {
+        await conn.query(
+          `UPDATE utilisateurs SET statut = 'ACTIF' WHERE id = ?`,
+          [existingUser.id]
+        );
+      }
+
+      userId = existingUser.id;
+
+    } else {
+      // ── Nouvel utilisateur → créer automatiquement ──────────────
+      isNew  = true;
+      const { v4: uuidv4 } = require('uuid');
+      userId = uuidv4();
+
+      // Mot de passe vide hashé (pas de vrai auth pour l'instant)
+      await conn.query(
+        `INSERT INTO utilisateurs (id, email, mot_de_passe, role, statut)
+         VALUES (?, ?, ?, 'ENTREPRENEUR', 'ACTIF')`,
+        [userId, cleanEmail, '$2b$10$placeholder_no_password_set']
+      );
+
+      console.log(`[Login] Nouveau compte créé : ${cleanEmail} (${userId})`);
     }
 
-    // Charger le profil complet
-    const profile = await loadUserProfile(users[0].id);
+    await conn.end();
 
-    res.json({ success: true, user: profile });
+    // Charger le profil complet
+    const profile = await loadUserProfile(userId);
+
+    res.json({
+      success : true,
+      is_new  : isNew,
+      user    : profile,
+      message : isNew
+        ? `Bienvenue ! Votre compte a été créé automatiquement avec l'email ${cleanEmail}.`
+        : `Connexion réussie.`
+    });
 
   } catch (err) {
     console.error('[/api/chat/login] Erreur:', err);

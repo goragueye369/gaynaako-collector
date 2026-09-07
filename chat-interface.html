@@ -295,12 +295,6 @@
     }
 
     /* Bouton écouter (discret, sous bulle bot) */
-    .listen-btn {
-      font-size: 10px; color: var(--text-light);
-      background: none; border: none; cursor: pointer;
-      padding: 0 0 0 36px;
-      display: flex; align-items: center; gap: 3px;
-    }
     .listen-btn.speaking { color: var(--blue); }
 
     /* Meta */
@@ -782,7 +776,7 @@ async function doLogin() {
     sessionId = null;
     closeModal();
     applyUserUI();
-    greetUser();
+    greetUser(d.is_new);
 
   } catch {
     err.textContent = 'Impossible de contacter le serveur.';
@@ -829,16 +823,21 @@ function applyUserUI() {
   sub.textContent = 'Connecté · ' + user.role.toLowerCase();
 }
 
-function greetUser() {
+function greetUser(isNew = false) {
   if (!user) return;
   const name = user.email.split('@')[0];
   let ctx = '';
-  if (user.secteur)             ctx = `secteur **${user.secteur}**`;
-  else if (user.secteurs)       ctx = `secteurs **${user.secteurs}**`;
-  else if (user.nom_entreprise) ctx = `entreprise **${user.nom_entreprise}**`;
+  if (user.secteur)               ctx = `secteur **${user.secteur}**`;
+  else if (user.secteurs)         ctx = `secteurs **${user.secteurs}**`;
+  else if (user.nom_entreprise)   ctx = `entreprise **${user.nom_entreprise}**`;
   else if (user.nom_organisation) ctx = `organisation **${user.nom_organisation}**`;
 
-  const msg = `Bonjour **${name}** ! 👋\n\nJe vous reconnais maintenant — **${user.role}**${ctx ? ` · ${ctx}` : ''}${user.pays ? ` · 📍 ${user.pays}` : ''}.\n\nToutes mes réponses seront adaptées à votre profil. Que souhaitez-vous explorer ?`;
+  let msg;
+  if (isNew) {
+    msg = `Bienvenue **${name}** ! 🎉\n\nVotre compte a été créé automatiquement avec votre email.\n\nVous avez un profil **ENTREPRENEUR** de base. Je peux déjà vous trouver des opportunités adaptées !\n\nPar la suite votre profil pourra être enrichi (secteur, pays, objectifs).`;
+  } else {
+    msg = `Bienvenue **${name}** ! 👋\n\nJe vous reconnais — **${user.role}**${ctx ? ` · ${ctx}` : ''}${user.pays ? ` · 📍 ${user.pays}` : ''}.\n\nToutes mes réponses seront adaptées à votre profil. Que souhaitez-vous explorer ?`;
+  }
 
   addBotMsg(msg, [
     'Opportunités pour mon profil',
@@ -948,14 +947,6 @@ function addBotMsg(text, sugs = [], meta = {}) {
     grp.appendChild(row);
   });
 
-  // Bouton écouter
-  const listenDiv = document.createElement('button');
-  listenDiv.className  = 'listen-btn';
-  listenDiv.id         = 'spk-' + id;
-  listenDiv.innerHTML  = '🔊 Écouter';
-  listenDiv.onclick    = () => speakText(text, 'spk-' + id);
-  grp.appendChild(listenDiv);
-
   // Meta (si disponible)
   if (meta && meta.duration_ms) {
     const metaDiv = document.createElement('div');
@@ -1042,62 +1033,118 @@ function copyMsg(text) {
 let recorder=null, chunks=[], recording=false, mstream=null;
 
 function initMic() {
-  if (!navigator.mediaDevices?.getUserMedia) {
-    document.getElementById('micBtn').disabled = true;
+  const btn = document.getElementById('micBtn');
+  if (!window.MediaRecorder || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    btn.disabled = true;
+    btn.title = 'Micro non supporté';
+    btn.style.opacity = '0.4';
   }
 }
 
 async function toggleRec() {
-  recording ? stopRec() : await startRec();
+  if (recording) { stopRec(); } else { await startRec(); }
 }
 
 async function startRec() {
-  try { mstream = await navigator.mediaDevices.getUserMedia({audio:true}); }
-  catch(e) {
-    addSysMsg(e.name==='NotAllowedError' ? '⚠️ Accès micro refusé.' : '⚠️ Micro inaccessible : '+e.message);
+  // Sécurité : getUserMedia exige localhost ou https
+  if (location.protocol !== 'https:' && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+    addSysMsg('⚠️ Le micro nécessite une connexion sécurisée (https) ou localhost.');
     return;
   }
-  const mime = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus'].find(t=>MediaRecorder.isTypeSupported(t))||'';
-  chunks=[]; recorder=mime?new MediaRecorder(mstream,{mimeType:mime}):new MediaRecorder(mstream);
-  recorder.ondataavailable=e=>{if(e.data.size>0) chunks.push(e.data)};
-  recorder.onstop=async()=>{
-    mstream.getTracks().forEach(t=>t.stop()); mstream=null;
-    if(!chunks.length) return;
-    await transcribe(new Blob(chunks,{type:recorder.mimeType||'audio/webm'}));
-    chunks=[];
+
+  try {
+    mstream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+  } catch(e) {
+    if (e.name === 'NotAllowedError' || e.name === 'PermissionDeniedError') {
+      addSysMsg('⚠️ Accès micro refusé. Autorisez le microphone dans votre navigateur (icône 🔒).');
+    } else if (e.name === 'NotFoundError') {
+      addSysMsg('⚠️ Aucun microphone détecté.');
+    } else {
+      addSysMsg('⚠️ Micro inaccessible : ' + e.message);
+    }
+    return;
+  }
+
+  // Trouver le meilleur format supporté
+  const mimeTypes = ['audio/webm;codecs=opus','audio/webm','audio/ogg;codecs=opus','audio/ogg','audio/mp4'];
+  const mime = mimeTypes.find(t => { try { return MediaRecorder.isTypeSupported(t); } catch { return false; } }) || '';
+
+  try {
+    chunks = [];
+    recorder = mime
+      ? new MediaRecorder(mstream, { mimeType: mime, audioBitsPerSecond: 128000 })
+      : new MediaRecorder(mstream);
+  } catch(e) {
+    if (mstream) { mstream.getTracks().forEach(t => t.stop()); mstream = null; }
+    addSysMsg('⚠️ Impossible de créer l\'enregistreur : ' + e.message);
+    return;
+  }
+
+  recorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) chunks.push(e.data); };
+
+  recorder.onstop = async () => {
+    if (mstream) { mstream.getTracks().forEach(t => t.stop()); mstream = null; }
+    if (!chunks.length) { addSysMsg('⚠️ Aucun audio capturé.'); resetMicBtn(); return; }
+    const blob = new Blob(chunks, { type: recorder.mimeType || 'audio/webm' });
+    chunks = [];
+    if (blob.size < 1000) { addSysMsg('⚠️ Audio trop court. Parlez plus longtemps.'); resetMicBtn(); return; }
+    await transcribe(blob);
   };
-  recorder.start(200); recording=true;
-  const b=document.getElementById('micBtn');
-  b.classList.add('rec'); b.textContent='⏹';
-  b.title='Arrêter';
+
+  recorder.onerror = (e) => {
+    addSysMsg('⚠️ Erreur enregistrement : ' + (e.error?.message || 'inconnue'));
+    resetMicBtn();
+  };
+
+  recorder.start(250);
+  recording = true;
+
+  const btn = document.getElementById('micBtn');
+  btn.classList.add('rec'); btn.textContent = '⏹'; btn.title = 'Arrêter et envoyer';
   document.getElementById('listenBar').classList.add('on');
+  document.getElementById('listenTxt').textContent = 'Enregistrement… parlez maintenant';
+  document.getElementById('userInput').value = '';
 }
 
 function stopRec() {
-  if(recorder&&recorder.state!=='inactive') recorder.stop();
-  recording=false;
-  const b=document.getElementById('micBtn');
-  b.classList.remove('rec'); b.textContent='⏳'; b.disabled=true;
-  document.getElementById('listenTxt').textContent='Transcription…';
+  if (!recorder) return;
+  try {
+    if (recorder.state === 'recording' || recorder.state === 'paused') recorder.stop();
+  } catch(e) { resetMicBtn(); return; }
+  recording = false;
+  const btn = document.getElementById('micBtn');
+  btn.classList.remove('rec'); btn.textContent = '⏳'; btn.disabled = true; btn.title = 'Transcription…';
+  document.getElementById('listenTxt').textContent = 'Transcription en cours…';
+}
+
+function resetMicBtn() {
+  recording = false;
+  const btn = document.getElementById('micBtn');
+  btn.classList.remove('rec'); btn.textContent = '🎤'; btn.disabled = false; btn.title = 'Message vocal';
+  document.getElementById('listenBar').classList.remove('on');
+  document.getElementById('listenTxt').textContent = 'Enregistrement… parlez maintenant';
+  if (mstream) { mstream.getTracks().forEach(t => t.stop()); mstream = null; }
 }
 
 async function transcribe(blob) {
   try {
-    const fd=new FormData();
-    fd.append('audio',blob,'voice.'+(blob.type.includes('ogg')?'ogg':'webm'));
-    const r=await fetch(TSCRIBE,{method:'POST',body:fd});
-    const d=await r.json();
-    if(d.success&&d.text){
-      document.getElementById('userInput').value=d.text;
+    const ext = blob.type.includes('ogg') ? 'ogg' : blob.type.includes('mp4') ? 'mp4' : 'webm';
+    const fd = new FormData();
+    fd.append('audio', blob, `voice.${ext}`);
+    const r = await fetch(TSCRIBE, { method: 'POST', body: fd });
+    if (!r.ok) { const err = await r.json().catch(()=>({})); addSysMsg('⚠️ Serveur : ' + (err.error || r.statusText)); return; }
+    const d = await r.json();
+    if (d.success && d.text && d.text.trim().length > 0) {
+      document.getElementById('userInput').value = d.text.trim();
       autoH(document.getElementById('userInput'));
-      send();
-    } else { addSysMsg('⚠️ Transcription vide. Réessayez.'); }
-  } catch(e){ addSysMsg('❌ Erreur transcription : '+e.message); }
-  finally {
-    const b=document.getElementById('micBtn');
-    b.classList.remove('rec'); b.textContent='🎤'; b.disabled=false;
-    document.getElementById('listenBar').classList.remove('on');
-    document.getElementById('listenTxt').textContent='Enregistrement… parlez';
+      setTimeout(() => send(), 100);
+    } else {
+      addSysMsg('⚠️ Transcription vide. Parlez plus distinctement et réessayez.');
+    }
+  } catch(e) {
+    addSysMsg('❌ Erreur transcription : ' + e.message);
+  } finally {
+    resetMicBtn();
   }
 }
 
