@@ -900,6 +900,61 @@ app.get('/api/strategy/:userId/tips', async (req, res) => {
 });
 
 // ============================================
+// ENDPOINTS MODULE 3 : CANDIDATURE
+// ============================================
+
+/**
+ * GET /api/candidature/list/:userId
+ * Récupère toutes les candidatures pour un utilisateur
+ */
+app.get('/api/candidature/list/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const [candidatures] = await poolProfils.query(
+      `SELECT id, utilisateur_id, opportunite_id, statut, score_completude,
+              champs_pre_remplis, champs_manquants, lettre_motivation,
+              date_creation, date_mise_a_jour
+       FROM candidatures
+       WHERE utilisateur_id = ?
+       ORDER BY date_mise_a_jour DESC`,
+      [userId]
+    );
+
+    // Récupérer les détails des opportunités
+    const oppIds = candidatures.map(c => c.opportunite_id);
+    const placeholders = oppIds.map(() => '?').join(',');
+    const [opps] = await pool.query(
+      `SELECT id, title, description, url, sectors, country
+       FROM opportunities_processed
+       WHERE id IN (${placeholders})`,
+      oppIds
+    );
+
+    const oppMap = new Map(opps.map(o => [o.id, o]));
+
+    const combined = candidatures.map(c => ({
+      ...c,
+      opportunite: oppMap.get(c.opportunite_id) || { id: c.opportunite_id, title: 'Opportunité non trouvée' }
+    }));
+
+    res.json({
+      success: true,
+      userId,
+      data: combined,
+      count: combined.length
+    });
+
+  } catch (error) {
+    console.error('Erreur /api/candidature/list:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ============================================
 // DÉMARRAGE DU SERVEUR
 // ============================================
 

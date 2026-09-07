@@ -2,6 +2,7 @@ let allProfiles = [];
 let currentRole = 'ALL';
 let currentProfile = null;
 let currentTab = 'strategy';
+let candidaturesCache = new Map(); // Cache des candidatures par profil
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -25,6 +26,12 @@ async function init() {
 
       document.getElementById('tab-strategy').style.display = currentTab === 'strategy' ? 'block' : 'none';
       document.getElementById('tab-matching').style.display = currentTab === 'matching' ? 'block' : 'none';
+      document.getElementById('tab-candidature').style.display = currentTab === 'candidature' ? 'block' : 'none';
+
+      // Recharger les candidatures si on passe sur l'onglet
+      if (currentTab === 'candidature' && currentProfile) {
+        loadCandidatures(currentProfile.id);
+      }
     });
   });
 
@@ -127,9 +134,10 @@ function selectProfile(profile) {
   document.getElementById('prof-sectors').innerHTML = `<strong>Secteurs / Domaines :</strong> ${sectors}`;
   document.getElementById('prof-mission').innerHTML = `<strong>Objectifs / Mission :</strong> ${mission}`;
 
-  // Lancer le calcul stratégique et le matching
+  // Lancer le calcul stratégique, le matching et les candidatures
   loadStrategy(profile.id);
   runMatching(profile);
+  loadCandidatures(profile.id);
 }
 
 // ─── CHARGEMENT DE LA STRATÉGIE IA ──────────────────────────────────────────
@@ -383,3 +391,115 @@ async function runMatching(profile) {
       `<div class="loading">❌ Erreur : ${e.message}</div>`;
   }
 }
+
+// ─── CHARGEMENT DES CANDIDATURES ────────────────────────────────────────────
+async function loadCandidatures(userId) {
+  document.getElementById('cand-results-header').style.display = 'none';
+  document.getElementById('cand-list').innerHTML =
+    `<div class="loading">📄 Chargement des dossiers de candidature...</div>`;
+
+  try {
+    // Récupérer les candidatures pour cet utilisateur
+    const res = await fetch(`/api/candidature/list/${userId}`);
+    const json = await res.json();
+
+    if (!json.success || !json.data || json.data.length === 0) {
+      document.getElementById('cand-list').innerHTML = `
+        <div class="empty-state">
+          <span>📄</span>
+          <p>Aucune candidature enregistrée pour ce profil.</p>
+          <p style="font-size:0.75rem; margin-top:0.5rem; color:#64748b">Utilisez l'onglet "Recommandations" pour en créer.</p>
+        </div>`;
+      return;
+    }
+
+    const candidatures = json.data;
+    document.getElementById('cand-results-header').style.display = 'flex';
+    document.getElementById('cand-count').textContent = candidatures.length;
+
+    document.getElementById('cand-list').innerHTML = candidatures.map((c, idx) => {
+      const statutBadge = {
+        'BROUILLON': { cls: 'draft', label: 'Draft', color: '#94a3b8' },
+        'COMPLETE': { cls: 'complete', label: 'Complète', color: '#60a5fa' },
+        'SOUMISE': { cls: 'submitted', label: 'Soumise', color: '#34d399' }
+      }[c.statut];
+
+      return `
+        <article class="cand-card">
+          <div class="cand-card-top">
+            <div class="cand-title">
+              <span class="cand-num">#${idx + 1}</span>
+              <h3 class="cand-name">${c.opportunite?.title || 'Opportunité inconnue'}</h3>
+            </div>
+            <span class="cand-statut-badge ${statutBadge.cls}">${statutBadge.label}</span>
+          </div>
+
+          <div class="cand-meta">
+            <span>📅 Création : <strong>${new Date(c.date_creation).toLocaleDateString()}</strong></span>
+            ${c.statut !== 'BROUILLON' ? `<span>📅 Mise à jour : <strong>${new Date(c.date_mise_a_jour).toLocaleDateString()}</strong></span>` : ''}
+          </div>
+
+          <div class="cand-progress">
+            <div class="progress-label">Complétude : ${c.score_completude}%</div>
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" style="width: ${c.score_completude}%"></div>
+            </div>
+          </div>
+
+          <div class="cand-actions">
+            ${c.statut === 'BROUILLON' 
+              ? `<button class="btn-edit" onclick="editCandidature('${userId}', '${c.opportunite_id}')">✏️ Compléter le dossier</button>`
+              : ''}
+            ${c.statut !== 'BROUILLON'
+              ? `<button class="btn-view" onclick="viewCandidature('${userId}', '${c.opportunite_id}')">👁️ Voir le dossier</button>`
+              : ''}
+          </div>
+        </article>
+      `;
+    }).join('');
+
+  } catch (e) {
+    console.error('Erreur loadCandidatures:', e);
+    document.getElementById('cand-list').innerHTML =
+      `<div class="loading">❌ Erreur : ${e.message}</div>`;
+  }
+}
+
+// Fonctions pour éditer/voir une candidature
+window.editCandidature = async function(userId, oppId) {
+  try {
+    const res = await fetch(`/api/candidature/prepare/${userId}/${oppId}`);
+    const data = await res.json();
+    
+    if (data.success) {
+      alert('✏️ Candidature préremplie avec succès !\n\nDonnées à compléter : ' + 
+            (data.champsManquants ? Object.keys(data.champsManquants).join(', ') : 'Aucun'));
+    } else {
+      alert('❌ Erreur : ' + (data.error || 'Impossible de préremplir la candidature'));
+    }
+  } catch (e) {
+    alert('❌ Erreur réseau : ' + e.message);
+  }
+};
+
+window.viewCandidature = async function(userId, oppId) {
+  try {
+    const res = await fetch(`/api/candidature/prepare/${userId}/${oppId}`);
+    const data = await res.json();
+    
+    if (data.success) {
+      const letter = data.lettre_motivation || 'Aucune lettre motivée';
+      const letterPreview = letter.length > 300 ? letter.substring(0, 300) + '...' : letter;
+      
+      alert(`📄 Candidature pour : ${data.opportunite?.title || 'Opportunité'}\n\n` +
+            `Statut : ${data.statut}\n` +
+            `Complétude : ${data.score_completude}%\n\n` +
+            `Lettre de motivation :\n${letterPreview}`);
+    } else {
+      alert('❌ Erreur : ' + (data.error || 'Impossible de récupérer la candidature'));
+    }
+  } catch (e) {
+    alert('❌ Erreur réseau : ' + e.message);
+  }
+};
+

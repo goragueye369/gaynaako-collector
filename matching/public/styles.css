@@ -441,3 +441,53 @@ body {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 4px; }
+
+/* ── FOOTER CHATBOT ────────────────────────────────────────── */
+.chat-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #161b27;
+  border-top: 1px solid #1e2a3a;
+  padding: 0.5rem 2rem;
+  display: flex;
+  justify-content: center;
+  z-index: 100;
+}
+
+.btn-chatbot {
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  color: white;
+  padding: 0.5rem 1.25rem;
+  border-radius: 20px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.85rem;
+  transition: all 0.15s;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.btn-chatbot:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59, 130, 246, 0.45);
+}
+
+/* ── CHATLINK TOPBAR ────────────────────────────────────────── */
+.chat-link {
+  display: inline-block;
+  font-size: 0.75rem;
+  color: #60a5fa;
+  text-decoration: none;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid #2563eb44;
+  border-radius: 6px;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.chat-link:hover {
+  background: #1a3a5c;
+  color: #93c5fd;
+  border-color: #3b82f6;
+}

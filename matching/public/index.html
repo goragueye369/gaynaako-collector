@@ -11,12 +11,15 @@
 <body>
   <header class="topbar">
     <div class="logo">🌱 Gaynaako</div>
-    <span class="topbar-sub">Plateforme de Test — Matching & Conseiller Stratégique IA</span>
+    <span class="topbar-sub">Plateforme de Test — Matching, Stratégie & Chatbot IA</span>
     <div class="db-badges">
       <span class="db-badge profils">🗄️ gaynaako_profils</span>
       <span class="db-arrow">×</span>
       <span class="db-badge opps">🗄️ gaynaako_opportunities</span>
     </div>
+    <a href="http://localhost:3002" target="_blank" class="chat-link" title="Ouvrir le Chatbot IA">
+      💬 Chatbot
+    </a>
   </header>
 
   <main class="layout">
@@ -60,6 +63,7 @@
       <div class="tabs-nav" id="tabs-nav" style="display:none;">
         <button class="tab-btn active" data-tab="strategy">🎯 Stratégie & Plan d'Action IA</button>
         <button class="tab-btn" data-tab="matching">🏆 Recommandations & Matching</button>
+        <button class="tab-btn" data-tab="candidature">📄 Candidature Préremplie</button>
       </div>
 
       <!-- Contenu Onglet 1 : Stratégie IA -->
@@ -87,9 +91,31 @@
         </div>
       </div>
 
+      <!-- Contenu Onglet 3 : Candidature -->
+      <div class="tab-content" id="tab-candidature" style="display:none;">
+        <div class="results-header" id="cand-results-header" style="display:none;">
+          <h3>📄 Dossiers de Candidature <span id="cand-count" class="count-badge">0</span></h3>
+          <p class="results-sub">Candidatures préremplies avec données du profil & opportunité</p>
+        </div>
+
+        <div id="cand-list">
+          <div class="empty-state">
+            <span>📄</span>
+            <p>Sélectionnez un profil pour voir ses dossiers de candidature</p>
+          </div>
+        </div>
+      </div>
+
     </section>
   </main>
 
+  <footer class="chat-footer">
+    <a href="http://localhost:3002" target="_blank" class="btn-chatbot">
+      💬 Ouvrir le Chatbot IA (port 3002)
+    </a>
+  </footer>
+
   <script src="app.js"></script>
+  <script src="chatbot.js"></script>
 </body>
 </html>
