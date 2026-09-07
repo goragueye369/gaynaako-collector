@@ -88,6 +88,40 @@ module.exports = {
       kill_timeout: 3000,
       wait_ready: false,
       listen_timeout: 3000
+    },
+
+    // Chatbot IA - RAG + Groq Llama 3.3 70B
+    {
+      name: 'gaynaako-chatbot',
+      script: 'chatbot-server.js',
+
+      instances: 1,
+      exec_mode: 'fork',
+
+      env: {
+        NODE_ENV     : 'production',
+        CHATBOT_PORT : 3002,
+        DB_HOST      : 'localhost',
+        DB_PORT      : 3306,
+        DB_NAME      : 'gaynaako_opportunities',
+        DB_USER      : 'root',
+        DB_PASSWORD  : process.env.DB_PASSWORD || '',
+        GROQ_API_KEY : process.env.GROQ_API_KEY || '',
+      },
+
+      autorestart       : true,
+      watch             : false,
+      max_memory_restart: '400M',
+
+      error_file     : './logs/chatbot-error.log',
+      out_file       : './logs/chatbot-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
+      merge_logs     : true,
+
+      restart_delay: 3000,
+      max_restarts : 10,
+      min_uptime   : '5s',
+      kill_timeout : 5000,
     }
   ]
 };

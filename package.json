@@ -22,10 +22,14 @@
     "cors": "^2.8.6",
     "csv-parser": "^3.2.1",
     "csv-writer": "^1.6.0",
+    "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mysql2": "^3.23.3",
+    "groq-sdk": "^1.6.0",
+    "multer": "^2.3.0",
+    "mysql2": "^3.24.3",
     "node-cron": "^4.6.0",
     "puppeteer": "^25.8.0",
-    "puppeteer-core": "^25.8.0"
+    "puppeteer-core": "^25.8.0",
+    "uuid": "^14.0.2"
   }
 }

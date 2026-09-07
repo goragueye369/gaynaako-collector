@@ -3,6 +3,8 @@
  * Expose les opportunités enrichies avec métadonnées d'attribution
  */
 
+require('dotenv').config();
+
 const express = require('express');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
@@ -17,9 +19,9 @@ app.use(express.json());
 // Configuration MySQL
 const DB_CONFIG = {
   host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 3306,
+  port: parseInt(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || 'rootpassword',
+  password: process.env.DB_PASSWORD || '',
   database: process.env.DB_NAME || 'gaynaako_opportunities'
 };
 

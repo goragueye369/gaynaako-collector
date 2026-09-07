@@ -4,16 +4,24 @@
  * Usage: node scheduler.js (laisser tourner en arrière-plan)
  */
 
+require('dotenv').config();
+
 const cron = require('node-cron');
 const { runPipeline } = require('./pipeline-complet');
 
 console.log('🤖 Scheduler démarré (PIPELINE COMPLET)...\n');
 
-// TEST : Exécution à 13h05 pour voir le système en action
-cron.schedule('05 13 * * *', async () => {
+// OPTION ACTIVE : Toutes les 6 heures (recommandé)
+cron.schedule('0 */6 * * *', async () => {
   console.log('⏰ Déclenchement du PIPELINE COMPLET...');
   await runPipeline();
 });
+
+// TEST : Exécution à 13h05
+// cron.schedule('05 13 * * *', async () => {
+//   console.log('⏰ Déclenchement du PIPELINE COMPLET...');
+//   await runPipeline();
+// });
 
 // OPTION 1 : Tous les jours à 10h du matin (heure Sénégal GMT+0)
 // cron.schedule('0 10 * * *', async () => {
@@ -36,7 +44,7 @@ cron.schedule('05 13 * * *', async () => {
 //   await runPipeline();
 // });
 
-console.log('⏰ Prochaine exécution : Tous les jours à 13h05 (TEST)');
+console.log('⏰ Collecte automatique : toutes les 6 heures (0h, 6h, 12h, 18h)');
 console.log('📋 Pipeline : Collecte → MySQL → NLP → Embeddings');
 console.log('📝 Logs : collector/logs/');
 console.log('\n✅ Scheduler actif. Appuyez sur Ctrl+C pour arrêter.\n');

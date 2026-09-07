@@ -6,19 +6,24 @@ Utilise SentenceTransformer pour créer des embeddings multilingues
 """
 
 import json
+import os
 import numpy as np
 import mysql.connector
 from sentence_transformers import SentenceTransformer
 from datetime import datetime
+from dotenv import load_dotenv
 import sys
+
+# Charger les variables d'environnement depuis .env
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 
 # Configuration MySQL
 DB_CONFIG = {
-    'host': 'localhost',
-    'port': 3306,
-    'user': 'root',
-    'password': '',  # Pas de mot de passe (XAMPP par défaut)
-    'database': 'gaynaako_opportunities'
+    'host': os.getenv('DB_HOST', 'localhost'),
+    'port': int(os.getenv('DB_PORT', 3306)),
+    'user': os.getenv('DB_USER', 'root'),
+    'password': os.getenv('DB_PASSWORD', ''),
+    'database': os.getenv('DB_NAME', 'gaynaako_opportunities')
 }
 
 class EmbeddingGenerator:

@@ -3,6 +3,7 @@
  * Table: opportunities_processed
  */
 
+require('dotenv').config();
 const mysql = require('mysql2/promise');
 const fs = require('fs');
 const path = require('path');
@@ -11,7 +12,7 @@ const csv = require('csv-parser');
 // Configuration MySQL
 const DB_CONFIG = {
   host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 3306,
+  port: parseInt(process.env.DB_PORT) || 3306,
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',  // Pas de mot de passe (XAMPP par défaut)
   database: process.env.DB_NAME || 'gaynaako_opportunities'
@@ -30,6 +31,19 @@ async function readCSV(filePath) {
       .on('end', () => resolve(opportunities))
       .on('error', reject);
   });
+}
+
+/**
+ * Convertir une date ISO (2026-09-01T14:39:45.883Z) en datetime MySQL (2026-09-01 14:39:45)
+ */
+function toMySQLDatetime(isoString) {
+  if (!isoString) return null;
+  // Remplacer le T par un espace et supprimer la partie millisecondes + Z
+  const clean = isoString.replace('T', ' ').replace(/\.\d+Z?$/, '').replace('Z', '');
+  // Vérifier que c'est une date valide
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return null;
+  return clean;
 }
 
 /**
@@ -104,7 +118,7 @@ async function importToMySQL(filePath) {
         opp.has_description || 'non',
         opp.has_date || 'non',
         parseInt(opp.quality_score) || 0,
-        opp.collected_at,
+        toMySQLDatetime(opp.collected_at),
         opp.target_audience || null,
         opp.experience_required || null,
         opp.budget_range || null,

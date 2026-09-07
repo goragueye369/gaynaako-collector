@@ -4,10 +4,16 @@
  * Usage: node pipeline-complet.js
  */
 
+require('dotenv').config();
+
+const path = require('path');
 const { autoCollect } = require('./auto-collect');
 const { exec } = require('child_process');
 const { promisify } = require('util');
 const execAsync = promisify(exec);
+
+// Chemin vers Python du venv (fallback sur python3 si venv absent)
+const PYTHON = path.join(__dirname, 'venv', 'bin', 'python');
 
 /**
  * Exécuter une commande et afficher le résultat
@@ -61,7 +67,7 @@ async function runPipeline() {
     console.log('═══════════════════════════════════════════════════\n');
     
     await runCommand(
-      'python nlp-processor.py',
+      `${PYTHON} nlp-processor.py`,
       'Analyse NLP (montants, deadlines, organisations)'
     );
 
@@ -71,7 +77,7 @@ async function runPipeline() {
     console.log('═══════════════════════════════════════════════════\n');
     
     await runCommand(
-      'python embedding-generator.py',
+      `${PYTHON} embedding-generator.py`,
       'Génération des vecteurs sémantiques'
     );
 
