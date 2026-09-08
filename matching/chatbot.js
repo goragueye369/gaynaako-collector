@@ -12,6 +12,11 @@ require('dotenv').config();
 const Groq = require('groq-sdk');
 const mysql = require('mysql2/promise');
 const { v4: uuidv4 } = require('uuid');
+const {
+  analyzeApplication,
+  saveFieldsToUserProfile,
+  extractCandidateInputs
+} = require('../candidature/candidature-engine');
 
 // ─── Configuration ──────────────────────────────────────────────────────────
 
@@ -31,7 +36,7 @@ const DB_PROFILS_CONFIG = {
   database: process.env.DB_PROFILS_NAME || 'gaynaako_profils',
 };
 
-const GROQ_MODEL = process.env.GROQ_MODEL || 'qwen/qwen3.6-27b';
+const GROQ_MODEL = process.env.GROQ_MODEL || 'llama-3.2-90b-text-preview';
 const MAX_HISTORY = 10;   // nb de messages à inclure dans le contexte
 const MAX_OPPS = 5;    // nb d'opportunités RAG à injecter
 const MAX_TOKENS = parseInt(process.env.MAX_TOKENS) || 600; // max tokens de réponse pour respecter le quota Groq (1000 OTPM)
@@ -209,13 +214,15 @@ function formatUserProfileForPrompt(profile) {
 function detectIntent(message) {
   const msg = message.toLowerCase();
 
+  if (msg.match(/postul|candidat|préremplir|remplir le formulaire|dossier de candidature/))
+    return 'candidature_preparation';
   if (msg.match(/trouv|cherch|opportunit|mission|projet|appel.d.offre|financement/))
     return 'search_opportunities';
-  if (msg.match(/éligib|postuler|candidat|puis-je|est-ce que je peux/))
+  if (msg.match(/éligib|puis-je|est-ce que je peux/))
     return 'eligibility';
   if (msg.match(/score|pourquoi|comment|explication|comprend/))
     return 'explanation';
-  if (msg.match(/rédig|candidature|lettre|proposition|comment écrire/))
+  if (msg.match(/rédig|lettre de motivation|lettre|proposition|comment écrire/))
     return 'writing_help';
   if (msg.match(/formation|compétence|carrière|évolution|apprendre/))
     return 'career_advice';
@@ -484,7 +491,22 @@ async function generateResponse(userMessage, sessionId, userId = 'anonymous') {
   const startTime = Date.now();
 
   // 1. Charger le profil utilisateur
-  const userProfile = await loadUserProfile(userId);
+  let userProfile = await loadUserProfile(userId);
+
+  // 1.b Sauvegarde automatique des informations de candidature fournies par l'utilisateur
+  let profileUpdateNotice = '';
+  if (userProfile && userProfile.id && userProfile.id !== 'anonymous') {
+    const candidateInputs = extractCandidateInputs(userMessage);
+    if (Object.keys(candidateInputs).length > 0) {
+      try {
+        await saveFieldsToUserProfile(userProfile.id, candidateInputs);
+        userProfile = await loadUserProfile(userId); // Recharger le profil enrichi
+        profileUpdateNotice = `\n[ACTION EFFECTUÉE] Les informations suivantes ont été enregistrées avec succès dans le profil de l'utilisateur : ${JSON.stringify(candidateInputs)}. Informez-le que ces données sont désormais sauvegardées de manière permanente.`;
+      } catch (e) {
+        console.error('[Profile Auto-Update] Erreur:', e.message);
+      }
+    }
+  }
 
   // 2. RAG — récupérer le contexte pertinent (enrichi avec le profil)
   const enrichedMessage = userProfile
@@ -493,7 +515,42 @@ async function generateResponse(userMessage, sessionId, userId = 'anonymous') {
 
   const { opportunities, intent, keywords, country } = await retrieveRelevantOpportunities(enrichedMessage);
 
-  // 2. Stats globales si l'utilisateur pose une question générale
+  // Module 3 : Diagnostic de candidature sans hallucination
+  let candidatureBlock = '';
+  if ((intent === 'candidature_preparation' || intent === 'writing_help') && userProfile && opportunities.length > 0) {
+    try {
+      const topOpp = opportunities[0];
+      const analysis = await analyzeApplication(userProfile.id, topOpp.id);
+      
+      const dispoLines = Object.values(analysis.champs_pre_remplis).map(c => `   ✅ ${c.label} disponible : "${c.value}"`).join('\n');
+      const manqLines = analysis.champs_manquants.map(m => `   ❌ Information manquante : ${m.label.toLowerCase()}`).join('\n');
+
+      candidatureBlock = `
+[MODULE 3 : CANDIDATURE PRÉREMPLIE — RÈGLE STRICTE : NE RIEN INVENTER]
+Opportunité ciblée : "${analysis.opportunity.title}" (${analysis.opportunity.source})
+Score de complétude du dossier : ${analysis.score_completude}% (${analysis.nb_remplis}/${analysis.total_requis} champs obligatoires)
+
+${dispoLines ? 'Éléments déjà disponibles dans le profil :\n' + dispoLines : ''}
+${manqLines ? 'Éléments obligatoires manquants :\n' + manqLines : ''}
+
+DIRECTIVES IMPÉRATIVES DE RÉPONSE :
+1. Si des informations obligatoires manquent (${analysis.nb_manquants} manquantes) :
+   - Indique que tu utilises les informations déjà présentes dans son profil pour préremplir le formulaire.
+   - Affiche clairement la liste des informations disponibles avec ✅.
+   - Affiche clairement les informations manquantes avec ❌ (ex: "❌ Information manquante : numéro de téléphone").
+   - RÈGLE ABSOLUE : N'INVENTE AUCUNE DONNÉE pour combler les manques.
+   - Demande à l'utilisateur de compléter UNIQUEMENT les informations nécessaires avant de poursuivre.
+   - Précise que ces nouvelles informations seront enregistrées dans son profil pour éviter de les lui redemander plus tard.
+2. Si toutes les informations sont présentes (complétude 100%) :
+   - Confirme que le dossier est complet et prérempli à 100%.
+   - Propose de générer immédiatement la lettre de motivation adaptée à l'opportunité.
+`;
+    } catch (err) {
+      console.error('[Candidature Block] Erreur:', err.message);
+    }
+  }
+
+  // 2.b Stats globales si l'utilisateur pose une question générale
   let statsContext = '';
   if (intent === 'statistics' || intent === 'general') {
     const stats = await getGlobalStats();
@@ -512,7 +569,7 @@ async function generateResponse(userMessage, sessionId, userId = 'anonymous') {
   // 3. Historique de conversation
   const history = await getConversationHistory(sessionId);
 
-  // 4. Construire le prompt avec contexte RAG + profil utilisateur
+  // 4. Construire le prompt avec contexte RAG + profil utilisateur + module candidature
   const ragContext = formatOpportunitiesForContext(opportunities);
   const profileContext = formatUserProfileForPrompt(userProfile);
 
@@ -520,6 +577,8 @@ async function generateResponse(userMessage, sessionId, userId = 'anonymous') {
 ${profileContext ? profileContext + '\n' : ''}
 [CONTEXTE - Données Gaynaako]
 ${statsContext}
+${profileUpdateNotice}
+${candidatureBlock}
 
 [OPPORTUNITÉS PERTINENTES TROUVÉES (${opportunities.length})]
 ${ragContext}
@@ -643,6 +702,11 @@ function buildSuggestions(intent, opportunities) {
       'Détailler mon profil pour une meilleure analyse',
       'Voir les critères complets de cette opportunité',
       'Trouver des opportunités similaires',
+    ],
+    candidature_preparation: [
+      'Générer ma lettre de motivation',
+      'Compléter mon dossier de candidature',
+      'Voir le statut de mes candidatures',
     ],
     writing_help: [
       'Obtenir un modèle de lettre de motivation',

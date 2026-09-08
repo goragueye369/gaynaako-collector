@@ -1237,3 +1237,115 @@
 2026-09-06 15:06:11 +00:00: 
 2026-09-06 15:06:11 +00:00: ✅ Scheduler actif. Appuyez sur Ctrl+C pour arrêter.
 2026-09-06 15:06:11 +00:00: 
+2026-09-08 11:36:53 +00:00: ◇ injected env (7) from .env // tip: ⌘ enable debugging { debug: true }
+2026-09-08 11:36:54 +00:00: ◇ injected env (0) from .env // tip: ◈ secrets for agents [www.dotenvx.com]
+2026-09-08 11:37:11 +00:00: 🤖 Scheduler démarré (PIPELINE COMPLET)...
+2026-09-08 11:37:11 +00:00: 
+2026-09-08 11:37:11 +00:00: ⏰ Collecte automatique : toutes les 6 heures (0h, 6h, 12h, 18h)
+2026-09-08 11:37:11 +00:00: 📋 Pipeline : Collecte → MySQL → NLP → Embeddings
+2026-09-08 11:37:11 +00:00: 📝 Logs : collector/logs/
+2026-09-08 11:37:11 +00:00: 
+2026-09-08 11:37:11 +00:00: ✅ Scheduler actif. Appuyez sur Ctrl+C pour arrêter.
+2026-09-08 11:37:11 +00:00: 
+2026-09-08 12:00:00 +00:00: ⏰ Déclenchement du PIPELINE COMPLET...
+2026-09-08 12:00:00 +00:00: ╔══════════════════════════════════════════════════╗
+2026-09-08 12:00:00 +00:00: ║   🚀 PIPELINE COMPLET AUTOMATISÉ                ║
+2026-09-08 12:00:00 +00:00: ║   Collecte → MySQL → NLP → Embeddings           ║
+2026-09-08 12:00:00 +00:00: ╚══════════════════════════════════════════════════╝
+2026-09-08 12:00:00 +00:00: 
+2026-09-08 12:00:00 +00:00: ═══════════════════════════════════════════════════
+2026-09-08 12:00:00 +00:00: PHASE 1 : COLLECTE ET IMPORT MYSQL
+2026-09-08 12:00:00 +00:00: ═══════════════════════════════════════════════════
+2026-09-08 12:00:00 +00:00: 
+2026-09-08 12:00:00 +00:00: ╔════════════════════════════════════════╗
+2026-09-08 12:00:00 +00:00: ║   🤖 AUTOMATISATION COMPLÈTE          ║
+2026-09-08 12:00:00 +00:00: ╚════════════════════════════════════════╝
+2026-09-08 12:00:00 +00:00: 
+2026-09-08 12:00:00 +00:00: 📥 ÉTAPE 1/4 : Collecte des données...
+2026-09-08 12:00:00 +00:00: 
+2026-09-08 12:00:00 +00:00: ========================================
+2026-09-08 12:00:00 +00:00: 🚀 COLLECTE DES OPPORTUNITÉS
+2026-09-08 12:00:00 +00:00: ========================================
+2026-09-08 12:00:00 +00:00: 
+2026-09-08 12:00:00 +00:00: 🔍 Scraping: JSONPlaceholder (Test)
+2026-09-08 12:00:00 +00:00: ✅ 5 opportunités trouvées
+2026-09-08 12:00:00 +00:00: ⏳ Pause de 3s avant la prochaine source...
+2026-09-08 12:00:04 +00:00: 
+2026-09-08 12:00:04 +00:00: 🔍 Scraping: DER Sénégal
+2026-09-08 12:00:19 +00:00: ⏳ Pause de 5s avant la prochaine source...
+2026-09-08 12:00:23 +00:00: 
+2026-09-08 12:00:23 +00:00: 🔍 Scraping: ARCOP (ex-ARMP) Sénégal
+2026-09-08 12:00:25 +00:00: ✅ 4 opportunités trouvées
+2026-09-08 12:00:25 +00:00: ⏳ Pause de 3s avant la prochaine source...
+2026-09-08 12:00:28 +00:00: 
+2026-09-08 12:00:28 +00:00: 🔍 Scraping: ADEPME
+2026-09-08 12:00:31 +00:00: ✅ 323 opportunités trouvées
+2026-09-08 12:00:31 +00:00: ⏳ Pause de 3s avant la prochaine source...
+2026-09-08 12:00:35 +00:00: 
+2026-09-08 12:00:35 +00:00: 🔍 Scraping: Banque Mondiale
+2026-09-08 12:00:50 +00:00: ✅ 20 opportunités trouvées
+2026-09-08 12:00:50 +00:00: ⏳ Pause de 3s avant la prochaine source...
+2026-09-08 12:00:54 +00:00: 
+2026-09-08 12:00:54 +00:00: 🔍 Scraping: BAD - Banque Africaine de Développement
+2026-09-08 12:01:06 +00:00: ✅ 20 opportunités trouvées
+2026-09-08 12:01:06 +00:00: ⏳ Pause de 4s avant la prochaine source...
+2026-09-08 12:01:10 +00:00: 
+2026-09-08 12:01:10 +00:00: 🔍 Scraping: Union Européenne
+2026-09-08 12:01:10 +00:00: ✅ 1 opportunités trouvées
+2026-09-08 12:01:10 +00:00: ⏳ Pause de 3s avant la prochaine source...
+2026-09-08 12:01:14 +00:00: 
+2026-09-08 12:01:14 +00:00: 🔍 Scraping: PNUD Sénégal
+2026-09-08 12:01:32 +00:00: ✅ 9 opportunités trouvées
+2026-09-08 12:01:32 +00:00: ⏳ Pause de 5s avant la prochaine source...
+2026-09-08 12:01:36 +00:00: 
+2026-09-08 12:01:36 +00:00: 🔍 Scraping: GIZ Sénégal
+2026-09-08 12:01:37 +00:00: ✅ 1 opportunités trouvées
+2026-09-08 12:01:37 +00:00: ⏳ Pause de 4s avant la prochaine source...
+2026-09-08 12:01:41 +00:00: 
+2026-09-08 12:01:41 +00:00: 🔍 Scraping: USAID
+2026-09-08 12:01:53 +00:00: ✅ 2 opportunités trouvées
+2026-09-08 12:01:53 +00:00: ⏳ Pause de 4s avant la prochaine source...
+2026-09-08 12:01:57 +00:00: 
+2026-09-08 12:01:57 +00:00: 💾 Sauvegardé: C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\data\raw\opportunities_2026-09-08T12-01-57.csv
+2026-09-08 12:01:57 +00:00: 📊 Total: 385 opportunités
+2026-09-08 12:01:57 +00:00: 
+2026-09-08 12:01:57 +00:00: ========================================
+2026-09-08 12:01:57 +00:00: ✅ COLLECTE TERMINÉE
+2026-09-08 12:01:57 +00:00: ========================================
+2026-09-08 12:01:57 +00:00: 
+2026-09-08 12:01:57 +00:00: ✅ Collecte terminée : opportunities_2026-09-08T12-01-57.csv
+2026-09-08 12:01:57 +00:00: 
+2026-09-08 12:01:57 +00:00: 🧹 ÉTAPE 2/4 : Nettoyage basique...
+2026-09-08 12:01:57 +00:00: 
+2026-09-08 12:01:57 +00:00:    - Opportunités brutes : 336
+2026-09-08 12:01:57 +00:00:    - Après dédoublonnage : 118
+2026-09-08 12:01:57 +00:00: ✅ Nettoyage terminé : opportunities_clean_2026-09-08T12-01-57.csv
+2026-09-08 12:01:57 +00:00: 
+2026-09-08 12:01:57 +00:00: ⚙️  ÉTAPE 3/4 : Processing avancé (métadonnées d'attribution)...
+2026-09-08 12:01:57 +00:00: 
+2026-09-08 12:01:57 +00:00: ╔════════════════════════════════════════╗
+2026-09-08 12:01:57 +00:00: ║   🧹 DATA CLEANING & PROCESSING       ║
+2026-09-08 12:01:57 +00:00: ╚════════════════════════════════════════╝
+2026-09-08 12:01:57 +00:00: 
+2026-09-08 12:01:57 +00:00: 📂 Fichier d'entrée: opportunities_clean_2026-09-08T12-01-57.csv
+2026-09-08 12:01:57 +00:00: 
+2026-09-08 12:01:57 +00:00:    - Opportunités traitées : 118
+2026-09-08 12:01:57 +00:00: ✅ Processing terminé : opportunities_processed_2026-09-08T12-01-57.csv
+2026-09-08 12:01:57 +00:00:    - Métadonnées générées : target_audience, experience_required, budget_range, urgency, complexity_level, suggested_profiles
+2026-09-08 12:01:57 +00:00: 
+2026-09-08 12:01:57 +00:00: 💾 ÉTAPE 4/4 : Import vers MySQL (table opportunities_processed)...
+2026-09-08 12:01:57 +00:00: 
+2026-09-08 12:01:57 +00:00: ========================================
+2026-09-08 12:01:57 +00:00: 📥 IMPORT VERS MYSQL (PROCESSED)
+2026-09-08 12:01:57 +00:00: ========================================
+2026-09-08 12:01:57 +00:00: 
+2026-09-08 12:01:57 +00:00: 📂 Fichier: opportunities_processed_2026-09-08T12-01-57.csv
+2026-09-08 12:01:57 +00:00: 📖 Lecture du fichier CSV...
+2026-09-08 12:01:57 +00:00: ✅ 118 opportunités lues
+2026-09-08 12:01:57 +00:00: 
+2026-09-08 12:01:57 +00:00: 🔌 Connexion à MySQL...
+2026-09-08 12:01:57 +00:00:    Host: localhost:3306
+2026-09-08 12:01:57 +00:00:    Database: gaynaako_opportunities
+2026-09-08 12:01:57 +00:00:    User: root
+2026-09-08 12:02:02 +00:00: ◇ injected env (11) from .env // tip: ⌘ multiple files { path: ['.env.local', '.env'] }
+2026-09-08 12:02:02 +00:00: ◇ injected env (0) from .env // tip: ⌘ custom filepath { path: '/custom/path/.env' }

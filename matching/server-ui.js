@@ -31,10 +31,38 @@ const DB_OPPORTUNITIES = {
   database: 'gaynaako_opportunities'
 };
 
+// ─── API : Test de connexion MySQL ──────────────────────────────────────────
+app.get('/api/test-db', async (req, res) => {
+  const tests = { profils: false, opportunities: false, errors: {} };
+  
+  // Test DB Profils
+  try {
+    const conn = await mysql.createConnection(DB_PROFILS);
+    await conn.query('SELECT 1');
+    await conn.end();
+    tests.profils = true;
+  } catch (e) {
+    tests.errors.profils = e.message;
+  }
+  
+  // Test DB Opportunities
+  try {
+    const conn = await mysql.createConnection(DB_OPPORTUNITIES);
+    await conn.query('SELECT 1');
+    await conn.end();
+    tests.opportunities = true;
+  } catch (e) {
+    tests.errors.opportunities = e.message;
+  }
+  
+  res.json({ success: tests.profils && tests.opportunities, tests });
+});
+
 // ─── API : Liste des profils ───────────────────────────────────────────────
 app.get('/api/profiles', async (req, res) => {
-  const conn = await mysql.createConnection(DB_PROFILS);
+  let conn;
   try {
+    conn = await mysql.createConnection(DB_PROFILS);
     const [users] = await conn.query('SELECT * FROM utilisateurs ORDER BY role, id');
     const result = [];
 
@@ -86,9 +114,10 @@ app.get('/api/profiles', async (req, res) => {
 
     res.json({ success: true, count: result.length, data: result });
   } catch (e) {
+    console.error('[/api/profiles] Erreur:', e.message, e.stack);
     res.status(500).json({ success: false, error: e.message });
   } finally {
-    await conn.end();
+    if (conn) await conn.end();
   }
 });
 
@@ -133,6 +162,10 @@ app.get('/api/strategy/:userId', async (req, res) => {
     res.status(500).json({ success: false, error: e.message });
   }
 });
+
+// ─── API : Module 3 Candidatures ───────────────────────────────────────────
+const candidatureRoutes = require('../candidature/candidature-routes');
+app.use('/api/candidature', candidatureRoutes);
 
 app.listen(PORT, () => {
   console.log('╔══════════════════════════════════════════════════════╗');

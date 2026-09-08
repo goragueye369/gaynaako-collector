@@ -465,41 +465,220 @@ async function loadCandidatures(userId) {
   }
 }
 
-// Fonctions pour éditer/voir une candidature
-window.editCandidature = async function(userId, oppId) {
+// ─── MODAL CANDIDATURE PRÉREMPLIE (MODULE 3) ─────────────────────────────
+
+window.closeCandidatureModal = function() {
+  const modal = document.getElementById('candidature-modal');
+  if (modal) modal.style.display = 'none';
+};
+
+window.openCandidatureModal = async function(userId, oppId) {
+  const modal = document.getElementById('candidature-modal');
+  const body = document.getElementById('cand-modal-body');
+  if (!modal || !body) return;
+
+  modal.style.display = 'flex';
+  body.innerHTML = '<div class="loading">📄 Chargement et analyse du dossier...</div>';
+
   try {
     const res = await fetch(`/api/candidature/prepare/${userId}/${oppId}`);
     const data = await res.json();
-    
-    if (data.success) {
-      alert('✏️ Candidature préremplie avec succès !\n\nDonnées à compléter : ' + 
-            (data.champsManquants ? Object.keys(data.champsManquants).join(', ') : 'Aucun'));
-    } else {
-      alert('❌ Erreur : ' + (data.error || 'Impossible de préremplir la candidature'));
+
+    if (!data.success) {
+      body.innerHTML = `<div class="loading" style="color:#ef4444">❌ Erreur : ${data.error || 'Impossible de préparer le dossier'}</div>`;
+      return;
     }
+
+    document.getElementById('cand-modal-opp-title').textContent = data.opportunity?.title || 'Dossier de candidature';
+    document.getElementById('cand-modal-opp-source').textContent = `${data.opportunity?.source || 'Source'} · ${data.opportunity?.country || 'Afrique'}`;
+
+    renderCandidatureModalContent(userId, oppId, data);
+
   } catch (e) {
-    alert('❌ Erreur réseau : ' + e.message);
+    body.innerHTML = `<div class="loading" style="color:#ef4444">❌ Erreur réseau : ${e.message}</div>`;
   }
 };
 
-window.viewCandidature = async function(userId, oppId) {
+function renderCandidatureModalContent(userId, oppId, data) {
+  const body = document.getElementById('cand-modal-body');
+  const prefilled = data.champs_pre_remplis || {};
+  const missing = data.champs_manquants || [];
+  const score = data.score_completude || 0;
+
+  body.innerHTML = `
+    <!-- Score de Complétude -->
+    <div class="cand-score-card">
+      <div class="cand-score-header">
+        <span>Complétude du formulaire de candidature</span>
+        <span style="color: ${score >= 100 ? '#10b981' : '#f59e0b'}">${score}% (${data.nb_remplis}/${data.total_requis} champs)</span>
+      </div>
+      <div class="cand-progress-bar">
+        <div class="cand-progress-fill" style="width: ${score}%"></div>
+      </div>
+    </div>
+
+    <!-- 1. Informations Disponibles -->
+    <div class="cand-block">
+      <div class="cand-block-title available">
+        <span>✅ Informations disponibles dans votre profil (${data.nb_remplis})</span>
+      </div>
+      <div class="cand-list-grid">
+        ${Object.entries(prefilled).map(([k, item]) => `
+          <div class="cand-field-item">
+            <strong>${item.label} :</strong> ${item.value}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <!-- 2. Informations Manquantes -->
+    <div class="cand-block">
+      <div class="cand-block-title missing">
+        <span>❌ Informations obligatoires manquantes (${missing.length})</span>
+      </div>
+
+      ${missing.length === 0 ? `
+        <div style="color:#10b981; font-size:0.85rem; font-weight:600;">
+          🎉 Votre profil contient toutes les informations requises pour cette opportunité !
+        </div>
+      ` : `
+        <p style="font-size:0.8rem; color:#94a3b8; margin-bottom:1rem;">
+          ⚠️ <em>Gaynaako ne devine pas vos données.</em> Renseignez uniquement les informations ci-dessous. Elles seront automatiquement enregistrées dans votre profil pour vos prochaines candidatures.
+        </p>
+
+        <form id="cand-missing-form" onsubmit="submitMissingFields(event, '${userId}', '${oppId}')">
+          ${missing.map(m => `
+            <div class="cand-form-group">
+              <label for="field-${m.key}">${m.label} *</label>
+              ${m.key === 'annees_experience' 
+                ? `<input type="number" id="field-${m.key}" name="${m.key}" placeholder="Ex: 5" min="0" required>`
+                : `<input type="text" id="field-${m.key}" name="${m.key}" placeholder="${m.description}" required>`
+              }
+            </div>
+          `).join('')}
+
+          <button type="submit" class="btn-cand-save" id="btn-save-fields">
+            💾 Enregistrer et mettre à jour mon profil
+          </button>
+        </form>
+      `}
+    </div>
+
+    <!-- 3. Lettre de Motivation IA -->
+    <div class="cand-block">
+      <div class="cand-block-title letter">
+        <span>🤖 Lettre de motivation sur mesure (IA Groq)</span>
+      </div>
+      <p style="font-size:0.8rem; color:#94a3b8;">
+        Générée automatiquement à partir de vos compétences réelles et des critères du bailleur.
+      </p>
+
+      ${data.lettre_motivation ? `
+        <div class="cand-letter-preview" id="letter-text">${data.lettre_motivation}</div>
+        <div style="margin-top:0.75rem; display:flex; gap:0.5rem;">
+          <button class="btn-cand-save" onclick="copyLetter()">📋 Copier la lettre</button>
+          <button class="btn-cand-gen-letter" onclick="generateLetter('${userId}', '${oppId}')">🔄 Régénérer</button>
+        </div>
+      ` : `
+        <div style="margin-top:0.75rem;">
+          <button class="btn-cand-gen-letter" id="btn-gen-letter" onclick="generateLetter('${userId}', '${oppId}')">
+            ✨ Générer la lettre de motivation adaptée
+          </button>
+        </div>
+      `}
+    </div>
+  `;
+}
+
+window.submitMissingFields = async function(event, userId, oppId) {
+  event.preventDefault();
+  const form = document.getElementById('cand-missing-form');
+  const btn = document.getElementById('btn-save-fields');
+  if (!form || !btn) return;
+
+  btn.disabled = true;
+  btn.textContent = 'Enregistrement en cours...';
+
+  const formData = new FormData(form);
+  const fields = {};
+  for (const [key, val] of formData.entries()) {
+    if (val.trim()) fields[key] = val.trim();
+  }
+
   try {
-    const res = await fetch(`/api/candidature/prepare/${userId}/${oppId}`);
-    const data = await res.json();
-    
-    if (data.success) {
-      const letter = data.lettre_motivation || 'Aucune lettre motivée';
-      const letterPreview = letter.length > 300 ? letter.substring(0, 300) + '...' : letter;
-      
-      alert(`📄 Candidature pour : ${data.opportunite?.title || 'Opportunité'}\n\n` +
-            `Statut : ${data.statut}\n` +
-            `Complétude : ${data.score_completude}%\n\n` +
-            `Lettre de motivation :\n${letterPreview}`);
+    const res = await fetch('/api/candidature/complete', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, oppId, fields })
+    });
+    const result = await res.json();
+
+    if (result.success && result.candidature) {
+      // Recharger le modal et actualiser la liste des candidatures
+      renderCandidatureModalContent(userId, oppId, result.candidature);
+      loadCandidatures(userId);
     } else {
-      alert('❌ Erreur : ' + (data.error || 'Impossible de récupérer la candidature'));
+      alert('❌ Erreur : ' + (result.error || 'Échec de la mise à jour'));
+      btn.disabled = false;
+      btn.textContent = '💾 Enregistrer et mettre à jour mon profil';
     }
   } catch (e) {
     alert('❌ Erreur réseau : ' + e.message);
+    btn.disabled = false;
+    btn.textContent = '💾 Enregistrer et mettre à jour mon profil';
   }
+};
+
+window.generateLetter = async function(userId, oppId) {
+  const btn = document.getElementById('btn-gen-letter');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = '⏳ Rédaction avec Groq LLM...';
+  }
+
+  try {
+    const res = await fetch('/api/candidature/letter', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, oppId })
+    });
+    const result = await res.json();
+
+    if (result.success) {
+      // Recharger le modal avec la nouvelle lettre
+      openCandidatureModal(userId, oppId);
+      loadCandidatures(userId);
+    } else {
+      alert('❌ Erreur génération : ' + (result.error || 'Service indisponible'));
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = '✨ Générer la lettre de motivation adaptée';
+      }
+    }
+  } catch (e) {
+    alert('❌ Erreur réseau : ' + e.message);
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '✨ Générer la lettre de motivation adaptée';
+    }
+  }
+};
+
+window.copyLetter = function() {
+  const letterEl = document.getElementById('letter-text');
+  if (!letterEl) return;
+  navigator.clipboard.writeText(letterEl.textContent).then(() => {
+    alert('📋 Lettre copiée dans le presse-papiers !');
+  }).catch(() => {
+    alert('Veuillez copier le texte manuellement.');
+  });
+};
+
+window.editCandidature = function(userId, oppId) {
+  openCandidatureModal(userId, oppId);
+};
+
+window.viewCandidature = function(userId, oppId) {
+  openCandidatureModal(userId, oppId);
 };
 

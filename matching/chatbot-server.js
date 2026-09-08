@@ -72,6 +72,10 @@ app.get('/', (_req, res) => {
   res.sendFile(path.join(__dirname, 'chat-interface.html'));
 });
 
+// ─── Module 3 : Candidature Routes ───────────────────────────────────────────
+const candidatureRoutes = require('../candidature/candidature-routes');
+app.use('/api/candidature', candidatureRoutes);
+
 // ─── Routes ───────────────────────────────────────────────────────────────────
 
 /**
@@ -121,7 +125,7 @@ app.post('/api/chat', async (req, res) => {
       meta       : {
         opportunities_used: result.opportunities_used,
         duration_ms       : result.duration_ms,
-        model             : 'qwen/qwen3.8-27b',
+        model             : process.env.GROQ_MODEL || 'llama-3.2-90b-text-preview',
       },
     });
 

@@ -115,6 +115,24 @@
     </a>
   </footer>
 
+  <!-- ── MODAL CANDIDATURE PRÉREMPLIE (MODULE 3) ────────────────── -->
+  <div id="candidature-modal" class="cand-modal" style="display:none;">
+    <div class="cand-modal-backdrop" onclick="closeCandidatureModal()"></div>
+    <div class="cand-modal-content">
+      <div class="cand-modal-header">
+        <div>
+          <span class="cand-modal-tag">Module 3 · Candidature Préremplie</span>
+          <h3 id="cand-modal-opp-title">Dossier de candidature</h3>
+          <p id="cand-modal-opp-source" class="cand-modal-sub"></p>
+        </div>
+        <button class="cand-modal-close" onclick="closeCandidatureModal()">✕</button>
+      </div>
+      <div id="cand-modal-body" class="cand-modal-body">
+        <div class="loading">Chargement du dossier...</div>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
   <script src="chatbot.js"></script>
 </body>

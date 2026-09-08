@@ -47,3 +47,16 @@
 2026-09-05 13:09:33 +00:00:     at maybeClose (node:internal/child_process:1101:16)
 2026-09-05 13:09:33 +00:00:     at ChildProcess._handle.onexit (node:internal/child_process:305:5)
 2026-09-06 15:05:59 +00:00: [2026-09-06T15:05:58.859Z] [PID: 41008] [32m[NODE-CRON][32m [33m[WARN][0m missed execution at Sun Sep 06 2026 13:05:00 GMT+0000 (heure moyenne de Greenwich)! Possible blocking IO or high CPU user at the same process used by node-cron.
+2026-09-08 12:00:19 +00:00: ❌ Erreur: timeout of 15000ms exceeded
+2026-09-08 12:01:57 +00:00: 
+2026-09-08 12:01:57 +00:00: ❌ Erreur lors de l'automatisation: Accès refusé pour l'utilisateur: 'root'@'@localhost' (mot de passe: OUI)
+2026-09-08 12:01:57 +00:00: Error: Accès refusé pour l'utilisateur: 'root'@'@localhost' (mot de passe: OUI)
+2026-09-08 12:01:57 +00:00:     at importToMySQL (C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\collector\import-processed-to-mysql.js:56:34)
+2026-09-08 12:01:57 +00:00:     at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+2026-09-08 12:01:57 +00:00:     at async autoCollect (C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\collector\auto-collect.js:218:5)
+2026-09-08 12:01:57 +00:00:     at async runPipeline (C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\pipeline-complet.js:56:5)
+2026-09-08 12:01:57 +00:00:     at async C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\scheduler.js:17:3
+2026-09-08 12:01:57 +00:00:     at async execute (C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\node_modules\node-cron\src\scheduler\runner.ts:194:26)
+2026-09-08 12:01:57 +00:00:     at async runTask (C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\node_modules\node-cron\src\scheduler\runner.ts:237:9)
+2026-09-08 12:01:57 +00:00:     at async Runner.runCoordinated (C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\node_modules\node-cron\src\scheduler\runner.ts:125:7)
+2026-09-08 12:01:57 +00:00:     at async <anonymous> (C:\Users\bmd\Desktop\Stage Sonatel\gaynaako-collector\node_modules\node-cron\src\scheduler\runner.ts:275:13)
